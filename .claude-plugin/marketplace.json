@@ -1,0 +1,26 @@
+{
+  "name": "bentoo-dev",
+  "owner": {
+    "name": "Bentoo",
+    "email": "contact@obentoo.org"
+  },
+  "metadata": {
+    "description": "Plugins maintained by the Bentoo organisation"
+  },
+  "plugins": [
+    {
+      "name": "bentoo-dev",
+      "source": "./",
+      "description": "Develop and maintain Gentoo ebuilds and overlays — create, edit, bump, clean, and QA-validate packages with specialized subagents.",
+      "author": {
+        "name": "lucascouts",
+        "email": "lucascs@protonmail.com"
+      },
+      "homepage": "https://github.com/obentoo/bentoo-dev",
+      "repository": "https://github.com/obentoo/bentoo-dev",
+      "license": "MIT",
+      "category": "development",
+      "tags": ["gentoo", "ebuild", "overlay", "portage", "linux", "packaging"]
+    }
+  ]
+}
