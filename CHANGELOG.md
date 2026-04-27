@@ -9,6 +9,17 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
+## [0.1.1] — 2026-04-27
+
+### Fixed
+
+- `scripts/manifest-stale-check.sh` (Stop hook) no longer flags loose `.ebuild`
+  files that live outside an overlay tree. The check now requires
+  `metadata/layout.conf` in some ancestor directory before validating Manifest
+  freshness. Eliminates false positives against the plugin's own
+  `assets/templates/*.ebuild` files (and any other repo that keeps example
+  ebuilds outside an overlay).
+
 ## [0.1.0] — 2026-04-27
 
 Initial public release. Plugin claims conformance against Claude Code v2.1.119

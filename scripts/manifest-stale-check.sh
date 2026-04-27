@@ -49,6 +49,21 @@ is_thin_manifest_overlay() {
     return 1
 }
 
+# Skip ebuilds that aren't part of an overlay tree (no metadata/layout.conf in
+# any ancestor). Avoids false positives from template/example ebuilds shipped
+# in this plugin or any other repo that keeps loose .ebuild files outside an
+# overlay.
+is_inside_overlay() {
+    local start="$1"
+    local d
+    d=$(cd "$start" && pwd)
+    while [[ "$d" != "/" ]]; do
+        [[ -f "$d/metadata/layout.conf" ]] && return 0
+        d=$(dirname -- "$d")
+    done
+    return 1
+}
+
 STALE=()
 
 while IFS= read -r -d '' ebuild; do
@@ -56,6 +71,7 @@ while IFS= read -r -d '' ebuild; do
     grep -q '^[[:space:]]*SRC_URI' "$ebuild" 2>/dev/null || continue
 
     dir=$(dirname -- "$ebuild")
+    is_inside_overlay "$dir" || continue
     manifest="$dir/Manifest"
 
     if [[ ! -f "$manifest" ]]; then
