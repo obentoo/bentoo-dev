@@ -1,6 +1,6 @@
 {
   "name": "bentoo-dev",
-  "version": "0.2.0",
+  "version": "0.1.2",
   "description": "Develop and maintain Gentoo ebuilds and overlays — create, edit, bump, clean, and QA-validate packages with specialized subagents.",
   "author": {
     "name": "lucascouts",

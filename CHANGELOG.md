@@ -9,9 +9,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
-## [0.2.0] — 2026-04-27
+## [0.1.2] — 2026-04-27
 
-### Changed (BREAKING)
+### Changed
 
 - **Single-skill API.** The five user-invocable skills (`/bentoo-dev:ebuild-create`,
   `/bentoo-dev:ebuild-bump`, `/bentoo-dev:ebuild-edit`, `/bentoo-dev:ebuild-qa`,
