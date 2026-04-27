@@ -9,6 +9,55 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
+## [0.2.0] — 2026-04-27
+
+### Changed (BREAKING)
+
+- **Single-skill API.** The five user-invocable skills (`/bentoo-dev:ebuild-create`,
+  `/bentoo-dev:ebuild-bump`, `/bentoo-dev:ebuild-edit`, `/bentoo-dev:ebuild-qa`,
+  `/bentoo-dev:overlay-clean`) have been consolidated into a single
+  natural-language entry point: **`/bentoo-dev:bentoo "<instruction>"`**.
+
+  The new skill receives a free-form instruction, classifies the intent
+  (`create` / `bump` / `edit` / `qa` / `clean`), asks the user when ambiguous,
+  loads the matching reference from `skills/bentoo/references/<intent>.md`,
+  and delegates to the same five sub-agents that previously backed the
+  individual skills (`ebuild-creator`, `ebuild-bumper`, `ebuild-editor`,
+  `qa-checker`, `overlay-maintainer`). No sub-agent behavior changed.
+
+  Migration:
+  - `/bentoo-dev:ebuild-create dev-libs/foo 1.2.3` →
+    `/bentoo-dev:bentoo "create dev-libs/foo 1.2.3 from <upstream>"`
+  - `/bentoo-dev:ebuild-bump app-misc/bar 2.1` →
+    `/bentoo-dev:bentoo "bump app-misc/bar to 2.1"`
+  - `/bentoo-dev:ebuild-edit games-util/baz "add USE flag wayland"` →
+    `/bentoo-dev:bentoo "add USE flag wayland to games-util/baz"`
+  - `/bentoo-dev:ebuild-qa dev-libs/foo` →
+    `/bentoo-dev:bentoo "run QA on dev-libs/foo"`
+  - `/bentoo-dev:overlay-clean --all` →
+    `/bentoo-dev:bentoo "clean the whole overlay"`
+
+  Auto-trigger by natural-language description still works — saying
+  *"bump mesa to 26.0.5"* or *"package XYZ from .deb"* invokes the new
+  `bentoo` skill automatically because all triggers from the previous five
+  skills were consolidated into its `description` and `when_to_use` fields.
+
+- The internal `gotchas` skill (`user-invocable: false`) is unchanged and
+  still preloaded by sub-agents.
+
+### Removed
+
+- `skills/ebuild-create/`, `skills/ebuild-bump/`, `skills/ebuild-edit/`,
+  `skills/ebuild-qa/`, `skills/overlay-clean/`.
+
+### Added
+
+- `skills/bentoo/SKILL.md` — natural-language router with intent
+  classification and disambiguation prompts.
+- `skills/bentoo/references/{create,bump,edit,qa,clean}.md` — operational
+  details per intent (loaded on demand via progressive disclosure, per the
+  Claude Code skills authoring guidance).
+
 ## [0.1.1] — 2026-04-27
 
 ### Fixed

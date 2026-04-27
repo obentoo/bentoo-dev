@@ -23,13 +23,20 @@ A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlay
 
 ## Features
 
-- **5 namespaced slash commands** — discoverable, scoped to the plugin:
-  - `/bentoo-dev:ebuild-create` — new ebuilds from upstream source / tarball / `.deb` / AppImage / git repo.
-  - `/bentoo-dev:ebuild-edit` — surgical changes to existing ebuilds (USE flags, deps, patches, phases) with consistency cross-checks.
-  - `/bentoo-dev:ebuild-bump` — version bumps (standard or `_p<YYYYMMDD>` snapshot).
-  - `/bentoo-dev:overlay-clean` — overlay-wide health: prune old versions, regenerate Manifests, create missing `metadata.xml`.
-  - `/bentoo-dev:ebuild-qa` — read-only validation (10 manual checks + `pkgcheck` if available).
-- **5 specialised sub-agents** at `agents/` — invoked via the `Agent` tool; each declares `effort`, `maxTurns`, `tools`, `disallowedTools`, `color`, and preloads the gotchas reference via `skills:` frontmatter.
+- **Single natural-language entry point** — `/bentoo-dev:bentoo "<instruction>"`.
+  The skill receives a free-form request, classifies the intent
+  (`create` / `bump` / `edit` / `qa` / `clean`), asks the user when ambiguous,
+  loads the matching reference (`skills/bentoo/references/<intent>.md`),
+  and delegates to the specialised sub-agent for that operation. Examples:
+  - `/bentoo-dev:bentoo "create dev-libs/foo 1.2.3 from <upstream>"` → `ebuild-creator`
+  - `/bentoo-dev:bentoo "bump app-misc/bar to 2.1"` → `ebuild-bumper`
+  - `/bentoo-dev:bentoo "add USE flag wayland to games-util/baz"` → `ebuild-editor`
+  - `/bentoo-dev:bentoo "run QA on dev-libs/foo"` → `qa-checker`
+  - `/bentoo-dev:bentoo "clean the whole overlay"` → `overlay-maintainer`
+
+  Auto-trigger by description-matching still works — *"bump mesa to 26.0.5"*
+  or *"package XYZ from .deb"* invokes the skill automatically without typing `/bentoo-dev:bentoo`.
+- **5 specialised sub-agents** at `agents/` — invoked via the `Agent` tool by the `bentoo` skill; each declares `effort`, `maxTurns`, `tools`, `disallowedTools`, `color`, and preloads the gotchas reference via `skills:` frontmatter.
 - **Deterministic hooks** covering 5 lifecycle events:
   - `SessionStart` / `CwdChanged` (overlay auto-detect + cache).
   - `PreToolUse` Bash (rm safety, with `deny`/`ask` decisions).
@@ -38,7 +45,7 @@ A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlay
   - `Stop` (Manifest staleness gate, `thin-manifests`-aware).
 - **Background monitors** (v2.1.105) for portage ELOG and `pkgcheck` findings, scoped to the relevant skill invocations.
 - **Output style** `qa-report` for deterministic, parseable QA reports.
-- **Bilingual triggers (PT/EN)** in every skill `description` for high auto-trigger fidelity.
+- **Bilingual triggers (PT/EN)** consolidated in the `bentoo` skill `description` and `when_to_use` for high auto-trigger fidelity across all five operations.
 - **11 ebuild templates** in `assets/templates/` + canonical placeholder substitution via `render-template.sh --env`.
 - **Per-overlay profiles** in `assets/profiles/` — currently `bentoo` and `default`.
 - **Modular references** in `references/` — `gotchas.md` preloaded as a skill; the others lazy-loaded on demand.
@@ -88,12 +95,15 @@ bentoo-dev/
 ├── README.md
 ├── CHANGELOG.md
 ├── LICENSE
-├── skills/                         # 5 user-invocable + 1 internal preload
-│   ├── ebuild-create/SKILL.md
-│   ├── ebuild-edit/SKILL.md
-│   ├── ebuild-bump/SKILL.md
-│   ├── overlay-clean/SKILL.md
-│   ├── ebuild-qa/SKILL.md
+├── skills/                         # 1 user-invocable + 1 internal preload
+│   ├── bentoo/
+│   │   ├── SKILL.md                # natural-language router
+│   │   └── references/             # progressive-disclosure detail per intent
+│   │       ├── create.md
+│   │       ├── bump.md
+│   │       ├── edit.md
+│   │       ├── qa.md
+│   │       └── clean.md
 │   └── gotchas/SKILL.md            # internal: preloaded by sub-agents
 ├── agents/                         # 5 sub-agents (delegated via Agent tool)
 │   ├── ebuild-creator.md
@@ -189,7 +199,7 @@ read JSON payloads from stdin and degrade gracefully when invoked manually.
 
 ```bash
 # Run QA on every modified ebuild in a PR:
-claude -p "/bentoo-dev:ebuild-qa $(git diff --name-only origin/main | grep '\.ebuild$' | xargs)" \
+claude -p "/bentoo-dev:bentoo run QA on $(git diff --name-only origin/main | grep '\.ebuild$' | xargs)" \
   --plugin-dir ./bentoo-dev \
   --permission-mode dontAsk \
   --allowedTools "Read Bash Glob Grep Agent" \
