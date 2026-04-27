@@ -1,0 +1,84 @@
+{
+  "ebuild-create": {
+    "should_trigger": [
+      "create an ebuild for dev-util/foo from this CMake repo on github",
+      "package this AppImage at https://example.com/bar.AppImage as app-editors/bar-2.5",
+      "I have a Rust project at /tmp/myapp; can you write a Gentoo ebuild for it?",
+      "criar ebuild para o pacote x11-misc/baz versão 0.9.1 a partir do tarball oficial",
+      "novo pacote: media-libs/quux usando meson, KEYWORDS ~amd64",
+      "make me an ebuild from this .deb https://downloads.example.com/cursor_3.2_amd64.deb",
+      "package XYZ from source as a Gentoo ebuild (autotools)"
+    ],
+    "should_not_trigger": [
+      "explain what an ebuild is",
+      "how does Portage decide which version to install?",
+      "compile this C++ file"
+    ]
+  },
+  "ebuild-edit": {
+    "should_trigger": [
+      "add a wayland USE flag to app-editors/cursor and wire the conditional dependency",
+      "editar dev-util/glslang para incluir o patch fix-build-gcc15.patch em PATCHES",
+      "modificar o src_install do media-libs/foo para instalar o ícone em 256x256",
+      "adicionar dependência de virtual/jpeg em x11-misc/bar com slot operator",
+      "fix dependencies: replace dev-libs/openssl with dev-libs/openssl:0= in qemu",
+      "remove the gnome USE flag from app-misc/baz and clean up the conditional deps"
+    ],
+    "should_not_trigger": [
+      "what does IUSE mean?",
+      "explain how dependency resolution works"
+    ]
+  },
+  "ebuild-bump": {
+    "should_trigger": [
+      "bump dev-util/glslang from 1.4.341.0 to 1.4.342.0 (standard semver)",
+      "atualizar app-editors/cursor para 0.45.2 e remover a versão antiga",
+      "snapshot bump: media-libs/quux _p20260420 → _p20260425, novo commit abc123def456",
+      "nova versão de x11-misc/foo: 2.5.0, mantendo as antigas",
+      "update brave-browser to 1.89, regenerate Manifest"
+    ],
+    "should_not_trigger": [
+      "what is a version bump?",
+      "compile mesa from source"
+    ]
+  },
+  "overlay-clean": {
+    "should_trigger": [
+      "limpar o overlay bentoo: remover versões antigas e regenerar todos os Manifests",
+      "scan the overlay for packages missing metadata.xml and create them",
+      "clean stale DIST entries from Manifests across all packages",
+      "remove old versions of app-editors/cursor, keep only latest",
+      "manter o overlay: full audit + fix automático"
+    ],
+    "should_not_trigger": [
+      "delete my entire overlay",
+      "what is a Manifest?"
+    ]
+  },
+  "ebuild-qa": {
+    "should_trigger": [
+      "run QA check on dev-util/glslang",
+      "verificar QA do pacote media-libs/foo",
+      "lint this ebuild: /var/db/repos/bentoo/app-editors/bar/bar-1.0.ebuild",
+      "rodar pkgcheck no diretório x11-misc/baz",
+      "audit ebuild quality across the overlay",
+      "validar todos os ebuilds antes do commit"
+    ],
+    "should_not_trigger": [
+      "explain pkgcheck",
+      "fix the bugs in my ebuild (this should route to ebuild-edit, not qa)"
+    ]
+  },
+  "global_should_not_trigger": [
+    "explain what USE flags are",
+    "how does Portage work?",
+    "compile this C++ file",
+    "create a Python script",
+    "fix this JavaScript bug",
+    "what is an eclass?",
+    "install mesa on my system",
+    "run emerge --sync",
+    "help me configure make.conf",
+    "review this pull request"
+  ]
+}

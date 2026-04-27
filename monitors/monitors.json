@@ -1,0 +1,14 @@
+[
+  {
+    "name": "portage-elog",
+    "description": "Streams Portage emerge ELOG summaries (build warnings, post-install QA messages) so Claude is notified of issues that surface only at install time.",
+    "command": "${CLAUDE_PLUGIN_ROOT}/scripts/monitor-elog.sh",
+    "when": "on-skill-invoke:ebuild-create"
+  },
+  {
+    "name": "pkgcheck-watch",
+    "description": "Periodically scans the active overlay with pkgcheck and notifies on new ERROR-level findings (no-op when pkgcheck is missing).",
+    "command": "${CLAUDE_PLUGIN_ROOT}/scripts/monitor-pkgcheck.sh",
+    "when": "on-skill-invoke:overlay-clean"
+  }
+]

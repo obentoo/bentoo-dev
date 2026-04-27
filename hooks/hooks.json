@@ -1,0 +1,173 @@
+{
+  "description": "bentoo-dev: deterministic safety, lint, and Manifest-staleness gates for Gentoo overlays.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/cache-overlay.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/cleanup-cache.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/cache-overlay.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session-title.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(rm *)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/safety-rm-check.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git rm *)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/safety-rm-check.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(cp *)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh"
+          },
+          {
+            "type": "command",
+            "if": "Bash(mv *)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh"
+          },
+          {
+            "type": "command",
+            "if": "Bash(sed *)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh"
+          },
+          {
+            "type": "command",
+            "if": "Bash(cp *)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh"
+          },
+          {
+            "type": "command",
+            "if": "Bash(mv *)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh"
+          },
+          {
+            "type": "command",
+            "if": "Bash(sed *)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-failure-diagnose.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "ebuild-creator",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/ebuild-creator-validate.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-stale-check.sh"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/stopfailure-log.sh"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/precompact-reinject-overlay.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

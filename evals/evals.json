@@ -1,0 +1,196 @@
+[
+  {
+    "skill": "ebuild-create",
+    "name": "create-cmake-ebuild",
+    "prompt": "Create an ebuild for dev-util/foo-1.0 that uses CMake",
+    "assertions": [
+      "File dev-util/foo/foo-1.0.ebuild exists",
+      "Ebuild contains 'inherit cmake'",
+      "Ebuild contains 'EAPI=8'",
+      "Ebuild contains copyright header on line 1",
+      "Ebuild KEYWORDS matches userConfig default_keywords (or '~amd64' fallback)",
+      "File dev-util/foo/metadata.xml exists",
+      "metadata.xml contains '<pkgmetadata>'",
+      "metadata.xml maintainer email matches userConfig maintainer_email"
+    ]
+  },
+  {
+    "skill": "ebuild-create",
+    "name": "create-binary-deb-ebuild",
+    "prompt": "Create an ebuild for app-editors/bar-2.0 from upstream .deb",
+    "assertions": [
+      "File app-editors/bar/bar-2.0.ebuild exists",
+      "Ebuild contains 'inherit' and 'unpacker'",
+      "Ebuild contains 'QA_PREBUILT=\"*\"'",
+      "Ebuild contains 'RESTRICT' with 'strip'",
+      "Ebuild installs to /opt/"
+    ]
+  },
+  {
+    "skill": "ebuild-create",
+    "name": "create-live-snapshot-dual",
+    "prompt": "Create a live+snapshot ebuild for media-libs/quux from github.com/example/quux",
+    "assertions": [
+      "Two ebuild files exist: quux-9999.ebuild and quux-<version>_p<date>.ebuild",
+      "9999 ebuild has empty KEYWORDS",
+      "Snapshot ebuild has KEYWORDS set",
+      "Both files share identical phase functions"
+    ]
+  },
+  {
+    "skill": "ebuild-bump",
+    "name": "standard-bump",
+    "prompt": "Bump dev-util/glslang from 1.4.341.0 to 1.4.342.0",
+    "assertions": [
+      "New ebuild file exists with version 1.4.342.0",
+      "New ebuild preserves structure from old version",
+      "Manifest was regenerated",
+      "Old ebuild left intact (not auto-removed unless asked)"
+    ]
+  },
+  {
+    "skill": "ebuild-bump",
+    "name": "snapshot-bump",
+    "prompt": "Snapshot bump media-libs/quux to _p20260425 with commit abc123def456",
+    "assertions": [
+      "New ebuild file exists with _p20260425 suffix",
+      "GIT_COMMIT (or equivalent) updated to abc123def456",
+      "S= reflects the new commit hash if applicable",
+      "Manifest was regenerated"
+    ]
+  },
+  {
+    "skill": "ebuild-edit",
+    "name": "add-use-flag",
+    "prompt": "Add wayland USE flag to app-editors/cursor",
+    "assertions": [
+      "IUSE contains 'wayland'",
+      "RDEPEND or DEPEND has wayland conditional dependency",
+      "metadata.xml has <flag name=\"wayland\"> entry"
+    ]
+  },
+  {
+    "skill": "ebuild-edit",
+    "name": "add-patch",
+    "prompt": "Add files/glslang-fix-gcc15.patch to dev-util/glslang and reference it via PATCHES",
+    "assertions": [
+      "File files/glslang-fix-gcc15.patch exists (created or assumed)",
+      "Ebuild contains PATCHES array with the new entry",
+      "src_prepare uses 'default' so PATCHES + eapply_user are applied"
+    ]
+  },
+  {
+    "skill": "overlay-clean",
+    "name": "remove-old-versions",
+    "prompt": "Remove old versions of app-editors/cursor, keep only latest",
+    "assertions": [
+      "Only latest ebuild version remains in directory",
+      "Manifest was updated",
+      "No stale DIST entries in Manifest"
+    ]
+  },
+  {
+    "skill": "overlay-clean",
+    "name": "create-missing-metadata",
+    "prompt": "Scan the overlay for packages missing metadata.xml and create them",
+    "assertions": [
+      "metadata.xml created for each scanned package that lacked one",
+      "Each metadata.xml has a <maintainer> using userConfig values",
+      "Report lists every package touched"
+    ]
+  },
+  {
+    "skill": "ebuild-qa",
+    "name": "qa-check-package",
+    "prompt": "Run QA check on dev-util/glslang",
+    "assertions": [
+      "Output contains severity levels (ERROR or WARNING or INFO)",
+      "Output mentions specific checks performed",
+      "Report includes summary count",
+      "No file writes occur"
+    ]
+  },
+  {
+    "skill": "ebuild-qa",
+    "name": "qa-pkgcheck-fallback",
+    "prompt": "Run QA check on x11-misc/baz when pkgcheck is not installed",
+    "assertions": [
+      "Output notes 'pkgcheck not available — skipping automated scan'",
+      "Manual lint section is still present",
+      "Summary line is still emitted"
+    ]
+  },
+  {
+    "hook": "safety-rm-check",
+    "name": "deny-rm-only-ebuild",
+    "scenario": "Package directory contains exactly one *.ebuild; an `rm <path>.ebuild` is attempted via the Bash tool.",
+    "assertions": [
+      "Hook stdout contains hookSpecificOutput.permissionDecision = \"deny\"",
+      "permissionDecisionReason mentions 'only .ebuild' and the package directory",
+      "Exit code 0 (canonical PreToolUse hook contract)",
+      "No file is removed"
+    ]
+  },
+  {
+    "hook": "safety-rm-check",
+    "name": "ask-rm-orphan-dist",
+    "scenario": "Package has two *.ebuild files; Manifest still references a DIST tied to the version being removed.",
+    "assertions": [
+      "Hook stdout contains hookSpecificOutput.permissionDecision = \"ask\" (NOT \"defer\")",
+      "permissionDecisionReason mentions 'orphan DIST entries'",
+      "Exit code 0",
+      "Removal can proceed only after user confirmation"
+    ]
+  },
+  {
+    "hook": "manifest-stale-check",
+    "name": "stop-block-on-stale-manifest",
+    "scenario": "An ebuild was modified but its Manifest mtime is older; overlay does NOT declare thin-manifests.",
+    "assertions": [
+      "Hook stdout contains {\"decision\":\"block\", ...}",
+      "reason mentions 'ebuild newer than Manifest' for the offending package",
+      "Exit code 0",
+      "stop_hook_active=true short-circuits the hook to exit 0 with empty stdout"
+    ]
+  },
+  {
+    "hook": "manifest-stale-check",
+    "name": "stop-allow-thin-manifests",
+    "scenario": "Same scenario as above but overlay metadata/layout.conf has 'thin-manifests = true'.",
+    "assertions": [
+      "Hook exits 0 with empty stdout",
+      "No decision:block emitted (thin-manifests skips ebuild-only mtime drift)"
+    ]
+  },
+  {
+    "hook": "session-title",
+    "name": "rename-session-on-bentoo-command",
+    "scenario": "User submits prompt '/bentoo-dev:ebuild-create dev-util/foo 1.0'.",
+    "assertions": [
+      "Hook stdout contains hookSpecificOutput.sessionTitle starting with 'bentoo: '",
+      "Title preserves the skill name and arguments",
+      "Non-/bentoo-dev prompts produce no output (no rename)"
+    ]
+  },
+  {
+    "hook": "ebuild-creator-validate",
+    "name": "subagent-stop-block-incomplete-package",
+    "scenario": "ebuild-creator subagent finishes but the new package directory is missing metadata.xml.",
+    "assertions": [
+      "Hook stdout contains {\"decision\":\"block\", ...}",
+      "reason mentions 'missing: metadata.xml'",
+      "Exit code 0",
+      "stop_hook_active=true short-circuits the hook"
+    ]
+  },
+  {
+    "hook": "manifest-failure-diagnose",
+    "name": "diagnose-network-failure",
+    "scenario": "`ebuild .../foo-1.0.ebuild manifest` failed with stderr containing 'Network is unreachable'.",
+    "assertions": [
+      "Hook stdout contains hookSpecificOutput.additionalContext",
+      "additionalContext includes 'network unreachable' and SRC_URI guidance",
+      "No-op when failed command is not `ebuild ... manifest`"
+    ]
+  }
+]

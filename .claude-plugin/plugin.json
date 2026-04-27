@@ -1,0 +1,51 @@
+{
+  "name": "bentoo-dev",
+  "version": "0.1.0",
+  "description": "Develop and maintain Gentoo ebuilds and overlays — create, edit, bump, clean, and QA-validate packages with specialized subagents.",
+  "author": {
+    "name": "lucascouts",
+    "email": "lucascs@protonmail.com"
+  },
+  "homepage": "https://github.com/obentoo/bentoo-dev",
+  "repository": "https://github.com/obentoo/bentoo-dev",
+  "license": "MIT",
+  "keywords": [
+    "gentoo",
+    "ebuild",
+    "overlay",
+    "portage",
+    "linux",
+    "packaging"
+  ],
+  "userConfig": {
+    "maintainer_email": {
+      "type": "string",
+      "title": "Maintainer email",
+      "description": "Default <email> in metadata.xml for new packages.",
+      "default": "lucascs@protonmail.com"
+    },
+    "maintainer_name": {
+      "type": "string",
+      "title": "Maintainer name",
+      "description": "Default <name> in metadata.xml for new packages.",
+      "default": "lucascouts"
+    },
+    "maintainer_type": {
+      "type": "string",
+      "title": "Maintainer type (person|project|nobody)",
+      "description": "Value of the type= attribute on <maintainer> in metadata.xml.",
+      "default": "person"
+    },
+    "default_keywords": {
+      "type": "string",
+      "title": "Default KEYWORDS for new ebuilds",
+      "description": "KEYWORDS string used when creating new ebuilds (e.g. '~amd64' or '~amd64 ~arm64').",
+      "default": "~amd64"
+    },
+    "preferred_overlay_path": {
+      "type": "directory",
+      "title": "Preferred overlay path",
+      "description": "Optional default overlay path; auto-detected if empty."
+    }
+  }
+}

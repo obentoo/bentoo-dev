@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="@@MAINTAINER_TYPE@@">
+		<email>@@MAINTAINER_EMAIL@@</email>
+		<name>@@MAINTAINER_NAME@@</name>
+	</maintainer>
+	<!-- Uncomment and add USE flag descriptions if IUSE is non-empty
+	<use>
+		<flag name="@@FLAG@@">@@FLAG_DESCRIPTION@@</flag>
+	</use>
+	-->
+	<!-- Uncomment and set upstream tracking if applicable
+	<upstream>
+		<remote-id type="github">@@OWNER@@/@@REPO@@</remote-id>
+	</upstream>
+	-->
+</pkgmetadata>

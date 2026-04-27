@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Wrapper exposing scripts/cache-overlay.sh on PATH when the plugin is enabled.
+# Manual invocation: prints the cache JSON if it exists, refreshes otherwise.
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec bash "$SCRIPT_DIR/scripts/cache-overlay.sh" "$@"

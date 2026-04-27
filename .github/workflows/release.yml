@@ -1,0 +1,45 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate plugin manifest
+        run: claude plugin validate .
+
+      - name: Publish plugin tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          # Mirrors the git tag into a Claude Code plugin tag (v2.1.118+),
+          # making the release discoverable to plugin marketplaces.
+          claude plugin tag . "$REF_NAME"
+          # `claude plugin tag` creates the tag locally; push it to origin.
+          PLUGIN_NAME="$(node -p "require('./.claude-plugin/plugin.json').name")"
+          git push origin "refs/tags/${PLUGIN_NAME}--${REF_NAME}"

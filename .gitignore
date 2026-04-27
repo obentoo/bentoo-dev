@@ -1,0 +1,12 @@
+# Claude Code epic artifacts (must never be committed — global rule)
+.epic/
+
+# Editor / OS junk
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Local-only Claude settings
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
