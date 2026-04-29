@@ -96,3 +96,4 @@ Após o sub-agent retornar, siga os checks listados no reference da intenção e
 - Esta skill **roda inline** (não use `context: fork`) para poder pedir clarificação ao usuário quando a intenção for ambígua.
 - Os 5 sub-agents (`ebuild-creator`, `ebuild-bumper`, `ebuild-editor`, `qa-checker`, `overlay-maintainer`) já existem em `agents/` e fazem o trabalho real — esta skill apenas orquestra.
 - Para detalhes de gotchas críticos do Gentoo, os sub-agents preloadam a skill interna `gotchas` automaticamente; você não precisa carregá-la aqui.
+- Canonical Gentoo docs (PMS, devmanual, wiki, GLEPs) estão indexados em `${CLAUDE_PLUGIN_ROOT}/references/external-docs.md` — consulte sob demanda quando o conhecimento embarcado não bastar.

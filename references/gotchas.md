@@ -2,6 +2,13 @@
 
 Common mistakes with concrete before/after examples. Each entry explains WHY it matters, not just what to do.
 
+**Canonical references** (consult when you need normative wording or extra context):
+- https://devmanual.gentoo.org/ebuild-writing/common-mistakes/index.html — devmanual list of common mistakes (authoritative).
+- https://devmanual.gentoo.org/ebuild-writing/variables/index.html — special variables (S, KEYWORDS, IUSE, REQUIRED_USE, RESTRICT).
+- https://devmanual.gentoo.org/ebuild-writing/installation-files/patching/index.html — `PATCHES`, `eapply`, `eapply_user`.
+- https://wiki.gentoo.org/wiki/Repository_format/package/Manifest — Manifest2 format (relevant to gotcha #8).
+- See `references/external-docs.md` for the full index.
+
 ---
 
 ## 1. eapply_user in src_prepare

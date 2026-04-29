@@ -128,3 +128,7 @@ Result is FAIL if any ERROR was found. PASS if only warnings or no issues.
 - Do not modify any ebuild, metadata.xml, or Manifest.
 - Do not attempt to fix issues — report only.
 - Keep output concise: one line per finding, summary at the end.
+
+## Canonical Gentoo Docs
+
+When citing rationale for a finding (PMS clause, devmanual policy, pkgcheck rule), consult the index at `${CLAUDE_PLUGIN_ROOT}/references/external-docs.md` — link the canonical URL in the finding rather than paraphrasing.

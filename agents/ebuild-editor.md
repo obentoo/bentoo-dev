@@ -83,3 +83,7 @@ Load these references only when the specific situation applies — do not load a
 ## Critical Gotchas
 
 The 10 gotchas are preloaded via the `bentoo-dev:gotchas` skill declared in this agent's frontmatter. Apply them whenever an edit touches `src_prepare`, dependencies, KEYWORDS, SRC_URI, `S=`, or QA-relevant variables — do not paraphrase them inline. If the skill content is missing from context (e.g., after auto-compact), re-read `${CLAUDE_PLUGIN_ROOT}/references/gotchas.md`.
+
+## Canonical Gentoo Docs
+
+When the embedded references are not enough (uncommon eclass, edge-case dependency syntax, normative wording), consult the index at `${CLAUDE_PLUGIN_ROOT}/references/external-docs.md`.

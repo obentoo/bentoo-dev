@@ -2,6 +2,13 @@
 
 Organized by category. For each eclass: when to use, key variables/functions, and working examples from the bentoo overlay.
 
+**Canonical references** (for any eclass not covered in depth here):
+- https://api.gentoo.org/eclass-reference/all-eclasses.html — auto-generated reference for **every** eclass.
+- https://devmanual.gentoo.org/eclass-reference/index.html — devmanual eclass-reference index.
+- https://devmanual.gentoo.org/eclass-writing/index.html — how to author a new eclass.
+- https://wiki.gentoo.org/wiki/Eclass — wiki overview of the eclass concept.
+- See `references/external-docs.md` for the full index.
+
 ---
 
 ## Build Systems

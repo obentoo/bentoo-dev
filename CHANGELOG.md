@@ -9,6 +9,43 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
+## [0.1.3] — 2026-04-28
+
+### Added
+
+- **Canonical Gentoo documentation index.** New `references/external-docs.md`
+  — a curated, lazy-loaded index of upstream Gentoo documentation organised
+  in 13 sections (foundational reading, variables/dependencies/USE flags,
+  phase functions / EAPI / PMS, common mistakes, eclasses, Manifest /
+  SRC_URI, overlay / repository format, QA tools, live ebuilds and patches,
+  cross-compile / multilib, binary packages, GLEPs, and policy / governance).
+  Encodes the rule "prefer **devmanual** (normative) over **wiki**
+  (descriptive) when both exist; cite **PMS** for cross-package-manager
+  behaviour."
+- **Sub-agent fallback to canonical docs.** All five sub-agents
+  (`ebuild-bumper`, `ebuild-creator`, `ebuild-editor`, `overlay-maintainer`,
+  `qa-checker`) now end with a short "Canonical Gentoo Docs" section
+  pointing at `${CLAUDE_PLUGIN_ROOT}/references/external-docs.md`. The
+  `qa-checker` variant additionally instructs the agent to cite the
+  canonical URL in findings rather than paraphrasing PMS / devmanual /
+  pkgcheck rationale.
+- **Topical reference preambles.** The four embedded references
+  (`gotchas.md`, `eclass-guide.md`, `dependency-syntax.md`,
+  `language-ecosystems.md`) gained a "Canonical references" block at the
+  top with the most relevant upstream URLs for that topic and a pointer to
+  the full index.
+- **`skills/bentoo/SKILL.md`** now documents the index as the on-demand
+  fallback when embedded knowledge is insufficient.
+
+### Notes
+
+- `external-docs.md` is consulted on demand (lazy-loaded) — it is **not**
+  preloaded into sub-agent context. Embedded references
+  (`gotchas.md`, `eclass-guide.md`, `dependency-syntax.md`,
+  `language-ecosystems.md`) remain the primary source; the canonical index
+  is a fallback for normative wording, uncommon eclass behaviour, and
+  policy citations.
+
 ## [0.1.2] — 2026-04-27
 
 ### Changed

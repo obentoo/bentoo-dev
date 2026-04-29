@@ -2,6 +2,14 @@
 
 Per-language patterns, gotchas, and working examples from the bentoo overlay.
 
+**Canonical references** (per-eclass docs, normative):
+- https://api.gentoo.org/eclass-reference/all-eclasses.html — index for every eclass (`go-module`, `cargo`, `distutils-r1`, `python-r1`, `perl-module`, etc.).
+- https://devmanual.gentoo.org/eclass-reference/index.html — devmanual eclass-reference.
+- https://wiki.gentoo.org/wiki/Project:Python — Python policy (PYTHON_COMPAT, PEP517).
+- https://wiki.gentoo.org/wiki/Project:Go — Go policy (vendoring, dependency tarballs).
+- https://wiki.gentoo.org/wiki/Project:Rust — Rust policy (cargo crate vendoring).
+- See `references/external-docs.md` for the full index.
+
 ---
 
 ## Go

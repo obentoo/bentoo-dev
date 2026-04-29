@@ -32,14 +32,62 @@ jobs:
       - name: Validate plugin manifest
         run: claude plugin validate .
 
-      - name: Publish plugin tag
+      - name: Publish plugin marketplace tag
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          # Mirrors the canonical tag into a `{plugin-name}--v{version}` git tag
+          # (Claude Code v2.1.118+). The prefixed tag is consumed by the
+          # marketplace dependency-resolver when another plugin declares
+          # `bentoo-dev` as a versioned dependency.
+          #
+          # IMPORTANT: we push the GIT TAG only. Do NOT create a GitHub Release
+          # for the prefixed tag — it would duplicate the canonical release
+          # below and steal the "Latest" badge from `vX.Y.Z`.
+          claude plugin tag . "$REF_NAME"
+          PLUGIN_NAME="$(node -p "require('./.claude-plugin/plugin.json').name")"
+          git push origin "refs/tags/${PLUGIN_NAME}--${REF_NAME}"
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          # CHANGELOG.md uses headings of the form "## [X.Y.Z] — YYYY-MM-DD".
+          # Extract the section for this version (between its heading and the
+          # next "## [" heading). Empty result means the section is missing —
+          # in that case we fall back to a generic note pointing at the file.
+          VERSION="${REF_NAME#v}"
+          NOTES="$(awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { capture=1; next }
+            capture && $0 ~ "^## \\[" { exit }
+            capture { print }
+          ' CHANGELOG.md)"
+          if [ -z "$NOTES" ]; then
+            NOTES="See [CHANGELOG.md](./CHANGELOG.md) for details."
+          fi
+          {
+            echo "notes<<RELEASE_NOTES_EOF"
+            echo "$NOTES"
+            echo "RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create canonical GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REF_NAME: ${{ github.ref_name }}
+          NOTES: ${{ steps.notes.outputs.notes }}
         run: |
-          # Mirrors the git tag into a Claude Code plugin tag (v2.1.118+),
-          # making the release discoverable to plugin marketplaces.
-          claude plugin tag . "$REF_NAME"
-          # `claude plugin tag` creates the tag locally; push it to origin.
-          PLUGIN_NAME="$(node -p "require('./.claude-plugin/plugin.json').name")"
-          git push origin "refs/tags/${PLUGIN_NAME}--${REF_NAME}"
+          # Single canonical release for the plain `vX.Y.Z` tag. Idempotent:
+          # if a release already exists (e.g. workflow rerun) update notes
+          # instead of failing. Title defaults to the bare ref; a maintainer
+          # can rename it post-hoc with:
+          #   gh release edit "$REF_NAME" --title "$REF_NAME — <short descriptor>"
+          if gh release view "$REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$REF_NAME" --notes "$NOTES"
+          else
+            gh release create "$REF_NAME" \
+              --title "$REF_NAME" \
+              --notes "$NOTES" \
+              --verify-tag
+          fi

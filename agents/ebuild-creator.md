@@ -94,3 +94,7 @@ Load these references only when the specific situation applies — do not load a
 ## Critical Gotchas
 
 The 10 gotchas (eapply_user, `|| die`, KEYWORDS for 9999, `S=` matching, SRC_URI rename, QA_PREBUILT/RESTRICT, header ordering, thin-manifests, `default` in `src_prepare`, MY_P/MY_PN) are preloaded via the `bentoo-dev:gotchas` skill declared in this agent's frontmatter. Apply them when generating the ebuild — do not duplicate or paraphrase. If the skill content is missing from context (e.g., after auto-compact), re-read `${CLAUDE_PLUGIN_ROOT}/references/gotchas.md`.
+
+## Canonical Gentoo Docs
+
+When the embedded references are not enough (uncommon eclass, edge-case dependency syntax, normative wording), consult the index at `${CLAUDE_PLUGIN_ROOT}/references/external-docs.md`.

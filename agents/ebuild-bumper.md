@@ -118,3 +118,7 @@ The full gotchas list is preloaded via the `bentoo-dev:gotchas` skill in this ag
   Keep the same KEYWORDS as the previous ebuild, or set to `~amd64` for new arches.
 - **thin-manifests**: Running `ebuild manifest` replaces the old DIST entry automatically.
   You do not need to edit the Manifest file manually.
+
+## Canonical Gentoo Docs
+
+When the embedded references are not enough (uncommon eclass, edge-case dependency syntax, normative wording), consult the index at `${CLAUDE_PLUGIN_ROOT}/references/external-docs.md`.

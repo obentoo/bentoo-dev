@@ -82,3 +82,7 @@ These rules are non-negotiable:
    remaining packages. Report all failures at the end.
 5. **No force-removal of live ebuilds**: 9999 ebuilds are live and intentional.
    Do not remove them unless explicitly instructed.
+
+## Canonical Gentoo Docs
+
+When the embedded references are not enough (overlay format edge cases, `layout.conf` keys, normative wording), consult the index at `${CLAUDE_PLUGIN_ROOT}/references/external-docs.md`.

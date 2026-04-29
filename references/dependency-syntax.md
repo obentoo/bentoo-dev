@@ -2,6 +2,13 @@
 
 Compact reference for dependency atom syntax in DEPEND/RDEPEND/BDEPEND/IDEPEND and REQUIRED_USE.
 
+**Canonical references**:
+- https://devmanual.gentoo.org/general-concepts/dependencies/index.html — full dependency semantics (normative).
+- https://devmanual.gentoo.org/eclass-reference/ebuild/index.html — atom syntax (SLOT/USE deps, defaults, blockers).
+- https://devmanual.gentoo.org/general-concepts/use-flags/index.html — USE-flag policy.
+- https://devmanual.gentoo.org/ebuild-writing/use-conditional-code/index.html — USE-conditional code patterns.
+- See `references/external-docs.md` for the full index.
+
 ---
 
 ## Version Operators
