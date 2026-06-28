@@ -2,22 +2,30 @@
 
 A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlays**. Provides specialised skills, sub-agents, hooks, monitors, and reference material for the full lifecycle of an ebuild — create, edit, bump, clean, QA-validate.
 
-> **Status:** v0.1.0 — initial public release (see `CHANGELOG.md`).
-> **Spec target:** Claude Code v2.1.119.
+> **Status:** v0.2.0 — overlay-agnostic generalization + EAPI 9 support (see `CHANGELOG.md`).
+> **Spec target:** Claude Code v2.1.119+ (works on later releases).
+
+> **Overlay-agnostic.** Although maintained by the Bentoo project, this plugin
+> targets **any** active Gentoo overlay. Conventions are derived from the
+> detected overlay's `metadata/layout.conf` (`masters`, `thin-manifests`,
+> `manifest-hashes`), not from its name. Examples that mention the bentoo
+> overlay are illustrative only.
 
 ### Minimum Claude Code versions
 
 | Feature used by the plugin                                  | Minimum version |
 |-------------------------------------------------------------|:---------------:|
 | `--bare` flag (incompatible with `/bentoo-dev:*` commands)  | v2.1.81         |
-| `SessionStart` / `CwdChanged` / `FileChanged` hooks         | v2.1.83         |
+| `SessionStart` / `CwdChanged` hooks                         | v2.1.83         |
 | `PreToolUse` `permissionDecision: "ask"` JSON shape         | v2.1.83         |
 | `permissionDecision: "defer"` (headless `-p` only)          | v2.1.89         |
 | `bin/` auto-PATH                                            | v2.1.91         |
 | `hookSpecificOutput.sessionTitle` (UserPromptSubmit)        | v2.1.94         |
 | `monitors/monitors.json` background monitors                | v2.1.105        |
 | `claude plugin tag` (release publishing)                    | v2.1.118        |
-| Spec target overall                                          | **v2.1.119**    |
+| `displayName` manifest field                                | v2.1.143        |
+| `additionalContext` from `Stop`/`SubagentStop`              | v2.1.163        |
+| Spec target overall                                          | **v2.1.119+**   |
 
 ---
 
@@ -41,12 +49,12 @@ A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlay
   - `SessionStart` / `CwdChanged` (overlay auto-detect + cache).
   - `PreToolUse` Bash (rm safety, with `deny`/`ask` decisions).
   - `PostToolUse` Write|Edit (lint, Manifest reminder).
-  - `FileChanged` (catches edits via Bash that bypass Write|Edit).
+  - `PostToolUse` Bash `if: cp|mv|sed` (catches `.ebuild` edits via Bash that bypass Write|Edit; `FileChanged` is intentionally not used — it matches literal filenames, not globs).
   - `Stop` (Manifest staleness gate, `thin-manifests`-aware).
 - **Background monitors** (v2.1.105) for portage ELOG and `pkgcheck` findings, scoped to the relevant skill invocations.
 - **Output style** `qa-report` for deterministic, parseable QA reports.
 - **Bilingual triggers (PT/EN)** consolidated in the `bentoo` skill `description` and `when_to_use` for high auto-trigger fidelity across all five operations.
-- **11 ebuild templates** in `assets/templates/` + canonical placeholder substitution via `render-template.sh --env`.
+- **15 ebuild templates** in `assets/templates/` (incl. `source-pypi`, `virtual`, `acct-user`, `acct-group`) + `metadata.xml` + a GLEP 42 `news-item.txt`; canonical placeholder substitution via `render-template.sh --env` with parametrized `@@EAPI@@` (renders 8 by default; `EAPI=9` opt-in) and `@@KEYWORDS@@`.
 - **Per-overlay profiles** in `assets/profiles/` — currently `bentoo` and `default`.
 - **Modular references** in `references/` — `gotchas.md` preloaded as a skill; the others lazy-loaded on demand.
 
@@ -111,7 +119,7 @@ bentoo-dev/
 │   ├── ebuild-bumper.md
 │   ├── overlay-maintainer.md
 │   └── qa-checker.md
-├── hooks/hooks.json                # SessionStart / CwdChanged / PreToolUse / PostToolUse / FileChanged / Stop
+├── hooks/hooks.json                # SessionStart / CwdChanged / PreToolUse / PostToolUse / SubagentStop / Stop / PreCompact
 ├── monitors/monitors.json          # portage-elog + pkgcheck-watch (v2.1.105+)
 ├── output-styles/qa-report.md      # deterministic QA report format
 ├── scripts/                        # shell helpers used by hooks / agents / monitors
@@ -136,7 +144,7 @@ bentoo-dev/
 │   └── language-ecosystems.md
 ├── assets/
 │   ├── profiles/  (bentoo.md, default.md)
-│   └── templates/  (11 *.ebuild + metadata.xml)
+│   └── templates/  (15 *.ebuild + metadata.xml + news-item.txt)
 └── evals/  (evals.json, trigger-queries.json)
 ```
 
@@ -154,7 +162,7 @@ bentoo-dev/
 | PreToolUse         | `Bash` + `if: Bash(git rm *)`                 | `safety-rm-check.sh`                  | Same gate for `git rm` (split entry — pipe-OR is not documented for `if:`).                   |
 | PostToolUse        | `Write\|Edit`                                 | `quick-lint.sh` + `manifest-reminder.sh` | Lint EAPI, copyright, `eapply_user`, KEYWORDS, SLOT, LICENSE; remind on SRC_URI changes.   |
 | PostToolUseFailure | `Bash`                                        | `manifest-failure-diagnose.sh`        | Classify `ebuild ... manifest` failures (network/checksum/404/perm) and suggest next steps.   |
-| FileChanged        | `*.ebuild`                                    | `quick-lint.sh` + `manifest-reminder.sh` | Catch edits made via Bash (`cp`/`mv`/`sed`) that bypass `Write\|Edit`.                     |
+| PostToolUse        | `Bash` + `if: cp\|mv\|sed`                     | `quick-lint.sh` + `manifest-reminder.sh` | Catch `.ebuild` edits made via Bash (`cp`/`mv`/`sed`) that bypass `Write\|Edit`.            |
 | SubagentStop       | `ebuild-creator`                              | `ebuild-creator-validate.sh`          | Block stop if any newly-created package is missing `metadata.xml` or `Manifest`.              |
 | Stop               | _(any)_                                       | `manifest-stale-check.sh`             | Block turn end if a modified ebuild has a stale Manifest (skips `thin-manifests` overlays).   |
 
@@ -170,6 +178,34 @@ orphan-DIST case (interactive prompt) and `"deny"` when removing the only
 `.ebuild` in a package directory. `defer` is reserved for headless mode
 (`-p` flag, v2.1.89+) and is **not** the right value for interactive
 "please confirm" prompts.
+
+### Hardening `rm` (fail-open hook + permission rule)
+
+`safety-rm-check.sh` is a **best-effort guard rail, not a security boundary**:
+the `if: "Bash(rm *)"` filter is fail-open and the script tokenizes on
+whitespace, so quoting, `$()`, and `&&` chains can slip past it. For a hard
+block, pair it with a permission `deny`/`ask` rule in your settings, e.g.:
+
+```json
+{ "permissions": { "ask": ["Bash(rm *.ebuild)", "Bash(rm -r *)"] } }
+```
+
+The hook still escalates recursive/globbed `rm` near `.ebuild` files to an
+`ask` prompt as a backstop.
+
+### Checkpointing caveat
+
+Claude Code checkpoints (`/rewind`) **do not** track files changed by Bash
+commands (`rm`, `mv`, `cp`, `sed`) — only `Write`/`Edit`/`NotebookEdit`. A
+`Manifest` regenerated via `ebuild … manifest`, or an `.ebuild` moved with
+`cp`/`mv`, will **not** be undone by a rewind. This is the reason the plugin
+ships dedicated Manifest-staleness hooks rather than relying on checkpoints.
+
+### Scheduling `pkgcheck`
+
+`scripts/scheduled-pkgcheck.sh` needs the local overlay on disk, so wire it via
+`/loop` (e.g. `/loop 1h …`) or a **Desktop scheduled task** — **not** `/schedule`
+(cloud Routines run in a fresh clone with no access to your local overlay).
 
 ---
 

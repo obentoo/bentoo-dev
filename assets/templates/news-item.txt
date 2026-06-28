@@ -1,0 +1,15 @@
+Title: @@TITLE@@
+Author: @@AUTHOR_NAME@@ <@@AUTHOR_EMAIL@@>
+Content-Type: text/plain
+Posted: @@DATE@@
+Revision: 1
+News-Item-Format: 2.0
+# Optional filtering headers — uncomment and fill the ones you need. Remove the
+# leading "# " entirely; commented lines are NOT valid GLEP 42 syntax and exist
+# here only as guidance. Multiple Display-If-* of the same type are OR-combined;
+# different types are AND-combined.
+# Display-If-Installed: @@DISPLAY_IF_INSTALLED@@
+# Display-If-Keyword: @@DISPLAY_IF_KEYWORD@@
+# Display-If-Profile: @@DISPLAY_IF_PROFILE@@
+
+@@NEWS_BODY@@

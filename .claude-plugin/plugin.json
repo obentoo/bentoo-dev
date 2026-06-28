@@ -1,6 +1,8 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "bentoo-dev",
-  "version": "0.1.3",
+  "displayName": "Bentoo Dev (Gentoo Ebuilds & Overlays)",
+  "version": "0.2.0",
   "description": "Develop and maintain Gentoo ebuilds and overlays — create, edit, bump, clean, and QA-validate packages with specialized subagents.",
   "author": {
     "name": "lucascouts",

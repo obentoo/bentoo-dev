@@ -42,17 +42,28 @@ while IFS= read -r -d '' ebuild; do
     if (( ${#missing[@]} > 0 )); then
         INCOMPLETE+=("$pkg (missing: $(IFS=,; echo "${missing[*]}"))")
     fi
-done < <(find "$OVERLAY" -name '*.ebuild' -type f -print0 2>/dev/null)
+done < <(find "$OVERLAY" -name .git -prune -o -name '*.ebuild' -type f -print0 2>/dev/null)
 
 if (( ${#INCOMPLETE[@]} > 0 )); then
     REASON="ebuild-creator left package(s) incomplete: $(IFS=';'; echo "${INCOMPLETE[*]}") — generate the missing files before stopping"
     if command -v jq >/dev/null 2>&1; then
-        jq -Rn --arg r "$REASON" '{decision:"block", reason:$r}'
+        jq -n --arg r "$REASON" '{decision:"block", reason:$r}'
     else
         ESC=${REASON//\\/\\\\}
         ESC=${ESC//\"/\\\"}
         printf '{"decision":"block","reason":"%s"}\n' "$ESC"
     fi
+    exit 0
+fi
+
+# Validation passed — surface a confirmation as additionalContext (v2.1.163+).
+if command -v jq >/dev/null 2>&1; then
+    jq -n '{
+        hookSpecificOutput: {
+            hookEventName: "SubagentStop",
+            additionalContext: "[bentoo-dev] ebuild-creator validation passed: every recently created package has metadata.xml and Manifest."
+        }
+    }'
 fi
 
 exit 0

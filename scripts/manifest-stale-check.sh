@@ -90,7 +90,7 @@ while IFS= read -r -d '' ebuild; do
         fi
         STALE+=("$dir (ebuild newer than Manifest)")
     fi
-done < <(find . -name '*.ebuild' -type f -print0 2>/dev/null)
+done < <(find . -name .git -prune -o -name '*.ebuild' -type f -print0 2>/dev/null)
 
 if (( ${#STALE[@]} > 0 )); then
     REASON="Manifest stale or missing for: $(printf '%s; ' "${STALE[@]}")"

@@ -12,7 +12,8 @@ when_to_use: >
   "add USE flag", "fix dependencies", "adicionar patch", "modificar
   src_install", "fix build with gcc-15", "verificar QA", "validar ebuild",
   "lint ebuild", "pkgcheck", "audit ebuild", "limpar overlay", "remover
-  versões antigas", "regenerar manifests", "fix overlay health".
+  versões antigas", "regenerar manifests", "fix overlay health", "criar
+  news item", "registrar pkgmove", "criar overlay novo", "bootstrap overlay".
 allowed-tools: Read Write Edit Bash Glob Grep Agent
 argument-hint: "<instrução em linguagem natural>"
 effort: high
@@ -53,7 +54,7 @@ $ARGUMENTS
 
 ## Step 1 — Classifique a intenção
 
-Analise `$ARGUMENTS` e o contexto da conversa, e determine UMA das 5 intenções abaixo. **Se o input for vazio**, peça ao usuário o que deseja fazer e liste as 5 opções.
+Analise `$ARGUMENTS` e o contexto da conversa, e determine UMA das 6 intenções abaixo. **Se o input for vazio**, peça ao usuário o que deseja fazer e liste as 6 opções.
 
 | Intenção | Quando aplicar | Sub-agent | Reference |
 |----------|----------------|-----------|-----------|
@@ -61,7 +62,8 @@ Analise `$ARGUMENTS` e o contexto da conversa, e determine UMA das 5 intenções
 | `bump`   | Subir versão de um ebuild existente (cópia da versão anterior, atualiza versão/commit/SRC_URI). Ex: "bump mesa to 26.0.5", "snapshot bump", "atualizar para nova versão" | `ebuild-bumper` | `references/bump.md` |
 | `edit`   | Modificação cirúrgica em ebuild que já existe, mantendo a mesma versão. Ex: "add USE flag", "fix dependencies", "adicionar patch", "fix build with gcc-15", "modificar src_install" | `ebuild-editor` | `references/edit.md` |
 | `qa`     | Validação read-only de ebuilds. Ex: "validar QA", "lint", "pkgcheck", "audit ebuild" | `qa-checker` | `references/qa.md` |
-| `clean`  | Manutenção do overlay como um todo: remover versões antigas, regenerar Manifests em batch, criar metadata.xml ausentes. Ex: "limpar overlay", "remover versões antigas", "fix overlay health" | `overlay-maintainer` | `references/clean.md` |
+| `clean`  | Manutenção do overlay como um todo: remover versões antigas, regenerar Manifests em batch, criar metadata.xml ausentes, news items (GLEP 42), `profiles/updates`, `package.mask`. Ex: "limpar overlay", "remover versões antigas", "fix overlay health", "criar news", "registrar pkgmove" | `overlay-maintainer` | `references/clean.md` |
+| `bootstrap` | Criar um overlay novo do zero (estrutura `profiles/repo_name`, `profiles/categories`, `metadata/layout.conf`). Ex: "criar overlay novo", "bootstrap overlay", "init repository" | `overlay-maintainer` | `references/bootstrap.md` |
 
 ### Regras de desambiguação
 
@@ -83,6 +85,7 @@ Após classificar a intenção (e desambiguar se necessário), leia o arquivo co
 - `${CLAUDE_PLUGIN_ROOT}/skills/bentoo/references/edit.md`
 - `${CLAUDE_PLUGIN_ROOT}/skills/bentoo/references/qa.md`
 - `${CLAUDE_PLUGIN_ROOT}/skills/bentoo/references/clean.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/bentoo/references/bootstrap.md`
 
 O reference contém: detalhes operacionais, payload exato a passar ao sub-agent, e checks de pós-execução específicos da intenção.
 
