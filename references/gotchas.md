@@ -61,6 +61,9 @@ src_install() {
 
 **Common shell commands that need `|| die`**: `cp`, `mv`, `rm`, `sed`, `awk`, `chmod`, `find` (when used for side effects), `pushd`, `popd`, `mkdir`.
 
+**Pipelines**: `cmd_a | cmd_b || die` only checks `cmd_b`. In EAPI 9 use the new
+`pipestatus` builtin to die if any stage fails. See `eapi9-migration.md`.
+
 ---
 
 ## 3. KEYWORDS Empty for Live Ebuilds

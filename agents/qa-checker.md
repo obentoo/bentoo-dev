@@ -68,13 +68,19 @@ in IUSE.
 Verify `metadata.xml` exists in the same package directory as the ebuild.
 - Fail: metadata.xml not found
 
-**Check 8 — Manifest present**
+**Check 8 — Manifest present and GLEP 84 hashes**
 Verify `Manifest` exists in the same package directory as the ebuild.
+For each `DIST` line, verify the checksums use the current GLEP 84 set —
+**BLAKE2B and SHA512**. Flag deprecated hashes (`WHIRLPOOL`, `SHA256`, `MD5`,
+`RMD160`) unless the overlay's `manifest-hashes` in `metadata/layout.conf`
+explicitly overrides the default set.
 - Fail: Manifest not found
+- Warning: DIST line missing BLAKE2B or SHA512, or carrying a deprecated hash
 
 **Check 9 — SLOT declared**
-Verify the ebuild declares a `SLOT=` variable.
-- Warning: SLOT not declared (defaults to 0 implicitly, but explicit is required)
+Verify the ebuild declares a `SLOT=` variable. SLOT is **mandatory** in
+EAPI 8+ (there is no implicit default); an ebuild without it fails QA.
+- Fail: SLOT not declared
 
 **Check 10 — LICENSE declared**
 Verify the ebuild declares a `LICENSE=` variable with a non-empty value.
@@ -110,7 +116,8 @@ Examples:
 [WARNING] foo-1.0.ebuild: USE flag 'doc' declared in IUSE but never referenced
 [ERROR] foo-1.0.ebuild: metadata.xml not found
 [ERROR] foo-1.0.ebuild: Manifest not found
-[WARNING] foo-1.0.ebuild: SLOT not declared
+[WARNING] foo-1.0.ebuild: DIST foo-1.0.tar.gz uses deprecated SHA256 (expected BLAKE2B + SHA512)
+[ERROR] foo-1.0.ebuild: SLOT not declared
 [ERROR] foo-1.0.ebuild: LICENSE not declared
 ```
 

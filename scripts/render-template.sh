@@ -85,6 +85,13 @@ if (( USE_ENV )); then
     done < <(printf '%s\n' "$CONTENT" | grep -ohE '@@[A-Z_]+@@' | sort -u || true)
 fi
 
+# metadata.xml: <name> is optional (GLEP 68). If MAINTAINER_NAME was not
+# provided, drop the whole <name>…</name> line rather than leaving a literal
+# placeholder (which would be invalid against the DTD).
+if [[ -z "${MAINTAINER_NAME:-}" ]]; then
+    CONTENT=$(printf '%s\n' "$CONTENT" | grep -v '<name>@@MAINTAINER_NAME@@</name>' || true)
+fi
+
 # Detect unresolved placeholders (informational, non-fatal unless strict).
 UNRESOLVED=$(printf '%s\n' "$CONTENT" | grep -ohE '@@[A-Z_]+@@' | sort -u || true)
 

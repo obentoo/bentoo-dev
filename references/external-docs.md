@@ -31,9 +31,14 @@ Curated index of upstream Gentoo documentation. Lazy-loaded — read this file o
 | URL | Topic |
 |---|---|
 | https://devmanual.gentoo.org/ebuild-writing/functions/index.html | `src_unpack/prepare/configure/compile/test/install`, `pkg_setup/postinst/postrm`. |
-| https://devmanual.gentoo.org/ebuild-writing/eapi/index.html | EAPI comparison (1 → 8). |
-| https://dev.gentoo.org/~ulm/pms/head/pms.html | **Package Manager Specification (PMS)** — normative. |
+| https://devmanual.gentoo.org/ebuild-writing/eapi/index.html | EAPI comparison. |
+| https://projects.gentoo.org/pms/9/pms.html | **PMS for EAPI 9** (normative; Council-approved 2025-12-14). |
+| https://projects.gentoo.org/pms/9/eapi-cheatsheet.pdf | EAPI 9 cheat sheet. |
+| https://dev.gentoo.org/~ulm/pms/head/pms.html | PMS HEAD (normative). |
 | https://gitweb.gentoo.org/proj/pms.git/ | PMS git repo. |
+
+For the 8 → 9 migration (banned `assert`/`domo`, `pipestatus`/`edo`,
+unexported variables, Bash 5.3) see the embedded `references/eapi9-migration.md`.
 
 ## 4. Common mistakes and maintenance
 
@@ -73,6 +78,14 @@ Curated index of upstream Gentoo documentation. Lazy-loaded — read this file o
 | https://wiki.gentoo.org/wiki/Repository_format/metadata | `metadata/layout.conf` (`masters`, `thin-manifests`, `eclass-overrides`). |
 | https://wiki.gentoo.org/wiki/Project:Portage/Sync | Sync engines (rsync, git, svn). |
 | https://wiki.gentoo.org/wiki/Project:Portage | Portage project hub. |
+
+**Cross-overlay masters.** `masters = gentoo <other>` in `metadata/layout.conf`
+declares the repositories this overlay inherits eclasses, categories, and
+profiles from. An overlay may master more than `::gentoo` (e.g. `guru`), so a
+package here can legitimately use an eclass or `||`-dep on a package that lives
+in a master repo, not in this one. The plugin caches the `masters` value
+(`overlay.json`) so agents don't assume a single `gentoo` master. When resolving
+an "unknown eclass/category", check the master repos before flagging it.
 
 ## 8. QA tools
 

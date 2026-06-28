@@ -14,6 +14,12 @@
 #
 # Note: `defer` is reserved for headless mode (`-p` flag, v2.1.89+); for
 # interactive prompting the canonical value is `ask`.
+#
+# LIMITATION: this hook is best-effort and fail-open — it tokenizes the command
+# on whitespace and cannot fully parse quoting, `$()`, or `&&` chains. It is a
+# guard rail, not a security boundary. For a hard block, pair it with a
+# `permissions.deny` rule (see README "Hardening rm"). Unparseable-but-dangerous
+# forms (recursive rm, globbed *.ebuild) fall through to an `ask` prompt below.
 set -euo pipefail
 
 [[ -t 0 ]] && exit 0
@@ -40,6 +46,16 @@ fi
 DENY_REASONS=()
 ASK_REASONS=()
 
+# Safety net for forms the naive tokenizer cannot evaluate: a recursive rm
+# (-r/-R/--recursive) or a shell glob in an rm that mentions .ebuild. These
+# can empty a package dir without any single token ending in `.ebuild`, so we
+# escalate to an interactive `ask` rather than silently allowing them.
+if echo "$CMD" | grep -qE '(^|[[:space:]])rm([[:space:]]|$)' \
+   && echo "$CMD" | grep -qE '(-[a-zA-Z]*[rR]|--recursive|\*)' \
+   && echo "$CMD" | grep -qE '\.ebuild|/'; then
+    ASK_REASONS+=("recursive or globbed rm near .ebuild files — confirm it will not empty a package directory")
+fi
+
 # Extract paths ending in .ebuild from the command (best-effort tokenization)
 for token in $CMD; do
     [[ "$token" != *.ebuild ]] && continue
@@ -64,7 +80,9 @@ for token in $CMD; do
     # 2. Ask: Manifest still references a DIST tied to this version (orphan risk).
     manifest="$dir/Manifest"
     base="${target##*/}"; ver="${base%.ebuild}"
-    if [[ -f "$manifest" ]] && grep -qE "^DIST .*${ver}\b" "$manifest" 2>/dev/null; then
+    # Match the version as a fixed string (it contains regex metacharacters like
+    # '.') against DIST lines only, to avoid false positives.
+    if [[ -f "$manifest" ]] && grep '^DIST ' "$manifest" 2>/dev/null | grep -qF -- "$ver"; then
         ASK_REASONS+=("$target removal would orphan DIST entries in $manifest — confirm rm + manifest regenerate")
     fi
 done
@@ -72,7 +90,7 @@ done
 emit_decision() {
     local decision="$1" reason="$2"
     if command -v jq >/dev/null 2>&1; then
-        jq -Rn --arg d "$decision" --arg r "$reason" '{
+        jq -n --arg d "$decision" --arg r "$reason" '{
             hookSpecificOutput: {
                 hookEventName: "PreToolUse",
                 permissionDecision: $d,
