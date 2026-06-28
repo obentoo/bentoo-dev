@@ -3,6 +3,8 @@
 <pkgmetadata>
 	<maintainer type="@@MAINTAINER_TYPE@@">
 		<email>@@MAINTAINER_EMAIL@@</email>
+		<!-- <name> is optional (GLEP 68). The renderer drops this line when
+		     MAINTAINER_NAME is unset; an empty placeholder would be invalid. -->
 		<name>@@MAINTAINER_NAME@@</name>
 	</maintainer>
 	<!-- Uncomment and add USE flag descriptions if IUSE is non-empty
@@ -10,9 +12,27 @@
 		<flag name="@@FLAG@@">@@FLAG_DESCRIPTION@@</flag>
 	</use>
 	-->
-	<!-- Uncomment and set upstream tracking if applicable
+	<!-- Uncomment to mark a package that may be stabilized on all arches at once
+	<stabilize-allarches/>
+	-->
+	<!-- Uncomment and set upstream tracking if applicable (GLEP 68 §3).
+	     Valid remote-id types include: github, gitlab, codeberg, bitbucket,
+	     sourceforge, savannah, pypi, cpan, rubygems, hackage, gentoo,
+	     freedesktop-gitlab, kde-invent, sourcehut, launchpad.
 	<upstream>
 		<remote-id type="github">@@OWNER@@/@@REPO@@</remote-id>
+		<bugs-to>@@BUGS_TO@@</bugs-to>
+		<doc>@@DOC_URL@@</doc>
+		<changelog>@@CHANGELOG_URL@@</changelog>
+		<maintainer status="active">
+			<email>@@UPSTREAM_EMAIL@@</email>
+			<name>@@UPSTREAM_NAME@@</name>
+		</maintainer>
 	</upstream>
+	-->
+	<!-- Uncomment for a longer description than DESCRIPTION allows
+	<longdescription lang="en">
+		@@LONGDESCRIPTION@@
+	</longdescription>
 	-->
 </pkgmetadata>

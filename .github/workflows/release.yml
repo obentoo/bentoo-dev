@@ -12,7 +12,7 @@ jobs:
   publish-tag:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
 
@@ -22,7 +22,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
 
@@ -30,7 +30,7 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
 
       - name: Validate plugin manifest
-        run: claude plugin validate .
+        run: claude plugin validate . --strict
 
       - name: Publish plugin marketplace tag
         env:

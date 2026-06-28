@@ -9,6 +9,75 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
+## [0.2.0] — 2026-06-28
+
+Overlay-agnostic generalization, EAPI 9 support, and bug fixes. The plugin now
+targets **any** active Gentoo overlay; conventions are derived from the detected
+overlay's `metadata/layout.conf`, not its name.
+
+### Fixed
+
+- **Broken monitors.** `monitors/monitors.json` used `on-skill-invoke:ebuild-create`
+  / `overlay-clean`, skills removed in the v0.1.2 consolidation — both never
+  fired. Now target `on-skill-invoke:bentoo`, and are declared under
+  `experimental.monitors` in the manifest.
+- **`session-title.sh`** matched slash-commands removed in v0.1.2; rewritten for
+  the single `bentoo` router.
+- **`binary-appimage.ebuild`** reassigned `S=` inside `src_unpack` (no effect in
+  EAPI 8); `S` is now global (`squashfs-root`) with a correct install/symlink.
+- **`@@KEYWORDS@@` was a phantom** — mapped by `render-template.sh` but absent
+  from every template, so `default_keywords` was silently ignored. Added to all
+  templates.
+- **`source-go.ebuild`** recommended the deprecated `EGO_SUM` (fatal QA notice)
+  and used `== 9999` (exact) instead of `== *9999*`.
+- **`metadata.xml`** left a literal `@@MAINTAINER_NAME@@` when the name was
+  unset (invalid against the DTD); the renderer now drops the optional `<name>`.
+- `source-python` dropped a redundant `test? ( … )` conflicting with
+  `distutils_enable_tests`; cmake/meson renamed `EGIT_COMMIT` → `GIT_COMMIT` in
+  the non-git-r3 branch; `binary-direct` `${A[0]}` → `${A}`.
+
+### Changed (generalization)
+
+- **`gstreamer-plugin.ebuild`** dropped the bentoo-only custom `gstreamer-meson`
+  eclass for the official `gstreamer` eclass.
+- **Overlay detection** (`detect-overlay.sh` / `cache-overlay.sh`) derives and
+  caches `masters`, `thin-manifests`, `sign-manifests`, `manifest-hashes` from
+  `layout.conf`; profile selection in `SKILL.md` is metadata-driven; `ls`/`cat`
+  parsing replaced with globs. Cross-overlay `masters` are honoured.
+- **References**: `cargo` no longer inherits the legacy `rust-toolchain`;
+  EGO_SUM removed as a recommendation.
+- **`ebuild-creator`** dropped redundant `disallowedTools: WebFetch` and the
+  false "template enforces empty KEYWORDS" claim; honours the router-provided
+  template (single source of template selection).
+
+### Added
+
+- **EAPI 9 support** (Council-approved 2025-12-14): templates render `EAPI=8`
+  by default and accept `EAPI=9`; new `references/eapi9-migration.md`.
+- **GLEP 68 metadata.xml**: `stabilize-allarches`, rich `<upstream>`
+  (`bugs-to`/`doc`/`changelog`/`maintainer`), `longdescription`, `remote-id`
+  type list.
+- **GLEP 84 hash validation** in `qa-checker` (BLAKE2B+SHA512; flag deprecated
+  hashes); SLOT is now an ERROR when missing (mandatory in EAPI 8+).
+- **New `bootstrap` intent** (6th) to create an overlay from scratch
+  (`profiles/repo_name`, `profiles/categories`, `metadata/layout.conf`);
+  `references/bootstrap.md`.
+- **`clean` intent** extended with `news` (GLEP 42), `updates`
+  (pkgmove/slotmove), and `mask` modes.
+- **New templates**: `source-pypi`, `virtual`, `acct-user`, `acct-group`, plus
+  a GLEP 42 `news-item.txt`.
+- **New references**: `eapi9-migration.md`, `keywords-arches.md`; expanded
+  `eclass-guide.md` (`pypi`, `acct-user/group`, `udev`, `systemd`, `tmpfiles`,
+  `fcaps`, `font`, `dist-kernel`, `xdg` vs `desktop`).
+- **Hardening**: `safety-rm-check.sh` matches DIST versions as fixed strings,
+  escalates recursive/globbed rm to `ask`, and documents its fail-open nature
+  (README "Hardening rm"); `manifest-stale-check.sh` / `ebuild-creator-validate.sh`
+  prune `.git` and the latter emits `additionalContext` on success (v2.1.163+).
+- **Manifest**: `$schema`, `displayName`. **CI**: actions pinned by commit SHA,
+  ShellCheck step, `claude plugin validate --strict`.
+- **README**: overlay-agnostic note, "Hardening rm", checkpointing caveat,
+  scheduling guidance for `scheduled-pkgcheck.sh`.
+
 ## [0.1.3] — 2026-04-28
 
 ### Added

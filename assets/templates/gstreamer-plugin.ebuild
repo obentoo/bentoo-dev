@@ -1,13 +1,21 @@
 # Copyright 1999-@@YEAR@@ Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=8
+EAPI=@@EAPI@@
+
+# The official gstreamer.eclass builds split GStreamer plugins (meson-based in
+# current versions) and derives HOMEPAGE, SRC_URI, LICENSE, SLOT and IUSE from
+# GST_ORG_MODULE. It provides multilib_src_configure automatically.
+#
+# NOTE: some overlays ship a custom `gstreamer-meson` eclass instead. If the
+# detected overlay has eclass/gstreamer-meson.eclass, swap the inherit below to
+# `gstreamer-meson` and use gstreamer_multilib_src_configure.
 GST_ORG_MODULE=@@GST_MODULE@@
 
-inherit gstreamer-meson
+inherit gstreamer
 
 DESCRIPTION="@@DESCRIPTION@@"
-KEYWORDS="~amd64 ~arm ~arm64"
+KEYWORDS="@@KEYWORDS@@"
 IUSE="+orc"
 
 RDEPEND="

@@ -212,13 +212,15 @@ src_install() {
 
 ---
 
-### rust-toolchain
+### Minimum Rust version
 
-**When to use**: Package requires a minimum Rust version.
+**When to use**: Package requires a minimum Rust version. Set `RUST_MIN_VER`
+together with `inherit cargo` — the legacy `rust-toolchain` eclass is no longer
+the canonical path and should not be inherited.
 
 ```bash
 RUST_MIN_VER="1.82.0"
-inherit rust-toolchain
+inherit cargo
 ```
 
 ---
@@ -373,6 +375,35 @@ python_test() {
 
 ---
 
+### pypi
+
+**When to use**: Python package distributed on PyPI — generates the `SRC_URI`
+for the sdist (or wheel) automatically. Almost always inherited together with
+`distutils-r1`.
+
+**Key variables/functions**:
+- `PYPI_PN` — PyPI project name (default `${PN}`); override for dotted/uppercase names
+- `PYPI_NO_NORMALIZE` — disable sdist filename normalization for non-standard naming
+- `pypi_sdist_url` — emits the sdist `.tar.gz` URL
+- `pypi_wheel_url` / `pypi_wheel_name` — for wheel-based distributions
+
+```bash
+PYPI_NO_NORMALIZE=1
+PYPI_PN="MyPackage"
+
+inherit distutils-r1 pypi
+
+SRC_URI="$(pypi_sdist_url)"
+S="${WORKDIR}/${P^}"   # if upstream sdist dir is capitalized
+```
+
+**Notes**:
+- With default settings, just `inherit distutils-r1 pypi` plus
+  `SRC_URI="$(pypi_sdist_url)"` is enough.
+- `pypi_translate_version` maps Gentoo `PV` to a PEP 440 version when needed.
+
+---
+
 ## Binary
 
 ### unpacker
@@ -469,6 +500,46 @@ src_install() {
 
 ---
 
+### font
+
+**When to use**: Package that installs font files (otf/ttf/pcf/etc.) into
+`/usr/share/fonts`. Handles fontconfig wiring and X font metadata.
+
+**Key variables/functions**:
+- `FONT_SUFFIX` — space-delimited list of suffixes to install (e.g. `"otf ttf"`); required
+- `FONT_S` — directory containing the fonts (default `${S}`)
+- `FONT_PN` — install subdir name under `/usr/share/fonts` (default `${PN}`)
+- `FONT_CONF` — array of fontconfig `.conf` files to install
+- `font_src_install` — installs fonts (default `src_install`)
+
+```bash
+FONT_SUFFIX="otf ttf"
+FONT_S="${S}/fonts"
+FONT_PN="myfont"
+
+inherit font
+
+# Default src_install (font_src_install) is usually enough; override only to add extras:
+src_install() {
+    font_src_install
+    dodoc README.md
+}
+```
+
+**Notes**: The eclass exports `pkg_postinst`/`pkg_postrm` to refresh font caches
+automatically — do not duplicate that work.
+
+---
+
+### xdg vs desktop
+
+`desktop` (above) only **installs** `.desktop` files and icons. `xdg`
+**refreshes the freedesktop caches** (desktop database, icon cache, shared-MIME
+cache) in `pkg_postinst`/`pkg_postrm`. They are complementary: use `desktop` to
+place the files and `xdg` so menus/icons/MIME associations actually update. A
+package shipping a `.desktop` file or icons should inherit **both**
+(`inherit desktop xdg`).
+
 ### xdg
 
 **When to use**: Any package installing desktop files, icons, or MIME types. Handles cache updates.
@@ -540,6 +611,134 @@ pkg_postinst() {
     optfeature "desktop notifications" x11-libs/libnotify
     optfeature "keyring support inside cursor" "virtual/secret-service"
     optfeature "Wayland support" "gui-libs/xdg-desktop-portal-wlr"
+}
+```
+
+---
+
+## System Integration
+
+### acct-user / acct-group
+
+**When to use**: Package needs a dedicated system user and/or group. These
+eclasses **replace** the old `enewuser`/`enewgroup` calls — you create a
+separate `acct-user/<name>` and/or `acct-group/<name>` package and depend on it.
+
+**Key variables/functions**:
+- `acct-group`: `ACCT_GROUP_ID` — preferred GID (must be unique; overlays may use `-1` for dynamic allocation)
+- `acct-user`: `ACCT_USER_ID` — preferred UID; `ACCT_USER_GROUPS=( ... )` — bash array of groups (first is primary); `ACCT_USER_HOME` (default `/dev/null`); `ACCT_USER_SHELL` (default nologin)
+
+```bash
+# acct-group/foo  (foo-0.ebuild)
+EAPI=8
+inherit acct-group
+ACCT_GROUP_ID=200
+
+# acct-user/foo   (foo-0.ebuild)
+EAPI=8
+inherit acct-user
+ACCT_USER_ID=200
+ACCT_USER_GROUPS=( foo )
+```
+
+**Notes**: The consuming package then depends on them, e.g.
+`RDEPEND="acct-user/foo acct-group/foo"` (use `IDEPEND` if needed only at
+install time). Do not call `enewuser`/`enewgroup` in new ebuilds.
+
+---
+
+### udev
+
+**When to use**: Package installs udev rules.
+
+**Key variables/functions**:
+- `get_udevdir` — path to the udev dir (without `${D}`)
+- `udev_dorules` / `udev_newrules` — install rule file(s)
+- `udev_reload` — `udevadm control --reload` in postinst/postrm
+
+```bash
+inherit udev
+
+src_install() {
+    default
+    udev_dorules contrib/99-example.rules
+}
+
+pkg_postinst() { udev_reload; }
+pkg_postrm()   { udev_reload; }
+```
+
+---
+
+### systemd
+
+**When to use**: Package installs systemd unit files.
+
+**Key variables/functions**:
+- `systemd_get_systemunitdir` — unit dir path (pass to configure via `--with-systemdsystemunitdir`)
+- `systemd_dounit` / `systemd_newunit` — install unit file(s)
+- `systemd_install_serviced` — install a `service.d/00gentoo.conf` drop-in
+- `systemd_enable_service` — create a wants/ symlink to enable a service
+
+```bash
+inherit systemd
+
+src_configure() {
+    econf --with-systemdsystemunitdir="$(systemd_get_systemunitdir)"
+}
+
+src_install() {
+    default
+    systemd_dounit "${FILESDIR}"/myapp.service
+}
+```
+
+---
+
+### tmpfiles
+
+**When to use**: Package ships `tmpfiles.d` config so volatile dirs/files get
+recreated on boot (works under both systemd and OpenRC via `virtual/tmpfiles`).
+
+**Key variables/functions**:
+- `dotmpfiles` / `newtmpfiles` — install into `/usr/lib/tmpfiles.d`
+- `tmpfiles_process` — create the dirs/files now (call in `pkg_postinst`)
+
+```bash
+inherit tmpfiles
+
+src_install() {
+    default
+    dotmpfiles "${FILESDIR}"/myapp.conf
+}
+
+pkg_postinst() {
+    tmpfiles_process myapp.conf
+}
+```
+
+**Notes**: Pulls in `virtual/tmpfiles` unless `TMPFILES_OPTIONAL` is set.
+
+---
+
+### dist-kernel-utils / kernel-build
+
+**When to use**: Niche — only for packages in the Distribution Kernel ecosystem.
+
+- `kernel-build`: builds a Distribution Kernel from source and installs it
+  (`sys-kernel/gentoo-kernel` and friends). Heavy machinery; the ebuild only
+  handles unpack + `.config`. Key vars include `KERNEL_IUSE_GENERIC_UKI` and
+  module-signing (`MODULES_SIGN_KEY`/`MODULES_SIGN_HASH`).
+- `dist-kernel-utils`: utility functions for kernel-module packages — most
+  notably `dist-kernel_reinstall_initramfs`, called in `pkg_postinst()` of an
+  ebuild whose module is bundled into the initramfs.
+
+```bash
+# In an out-of-tree kernel-module ebuild that ends up in the initramfs:
+inherit dist-kernel-utils
+
+pkg_postinst() {
+    dist-kernel_reinstall_initramfs "${KV_DIR}" "${KV_FULL}"
 }
 ```
 
@@ -710,3 +909,29 @@ src_install() {
     # ...
 }
 ```
+
+---
+
+### fcaps
+
+**When to use**: A binary needs elevated privileges via POSIX **file
+capabilities** instead of a setuid root bit (e.g. `cap_net_raw` for `ping`).
+Preferred over `fperms u+s` for least privilege.
+
+**Key variables/functions**:
+- `FILECAPS` — array of capability assignments, applied automatically in `pkg_postinst`. Separate multiple sets with `--`.
+- `fcaps [-o owner] [-g group] [-m mode] [-M caps-mode] <caps> <file...>` — the underlying function; falls back to setuid if the FS lacks capability support.
+- `FCAPS_DENY_WORLD_READ` — strip world-read from the affected files.
+
+```bash
+inherit fcaps
+
+# Declarative form (runs in pkg_postinst automatically):
+FILECAPS=(
+    cap_net_raw  usr/bin/myping
+    -- cap_net_admin  usr/bin/mytool
+)
+```
+
+**Notes**: Capabilities are applied at **postinst**, not in `src_install`, so
+they survive binpkg installs.

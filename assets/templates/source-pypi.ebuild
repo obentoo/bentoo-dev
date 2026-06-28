@@ -6,11 +6,14 @@ EAPI=@@EAPI@@
 DISTUTILS_USE_PEP517=@@BUILD_BACKEND@@
 PYTHON_COMPAT=( python3_{11..14} )
 
-inherit distutils-r1
+# The pypi eclass derives SRC_URI from ${PN}/${PV} automatically — do NOT
+# declare SRC_URI manually below. If the PyPI project name differs from ${PN}:
+#   - set PYPI_PN="ProjectName" before `inherit` to override the project name, or
+#   - set PYPI_NO_NORMALIZE=1 to keep the original (non-normalized) name casing.
+inherit distutils-r1 pypi
 
 DESCRIPTION="@@DESCRIPTION@@"
 HOMEPAGE="@@HOMEPAGE@@"
-SRC_URI="@@SRC_URI@@"
 
 LICENSE="@@LICENSE@@"
 SLOT="@@SLOT@@"

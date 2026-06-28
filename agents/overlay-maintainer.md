@@ -45,14 +45,35 @@ Address each issue found during the scan:
 - Never leave a package directory with zero ebuilds
 
 **Regenerating Manifests**:
-- Run `ebuild <latest-ebuild-path> manifest` for each package needing regeneration
-- This automatically clears stale DIST entries and adds current ones
+- Run `ebuild <latest-ebuild-path> manifest` (or `pkgdev manifest`) for each
+  package needing regeneration
+- This refreshes DIST entries for distfiles still referenced; it does **not**
+  necessarily drop DIST lines for versions whose ebuild still exists. Truly
+  orphan DIST entries (no ebuild references them) may need `pkgdev manifest` or
+  manual removal — verify before deleting.
+- For stale-Manifest detection, compare mtimes (`stat -c %Y`) or reuse the
+  plugin's `${CLAUDE_PLUGIN_ROOT}/scripts/manifest-stale-check.sh` logic.
 - Verify exit code 0 for each run; log failures without stopping the batch
 
 **Creating missing metadata.xml**:
 - Generate a minimal valid metadata.xml for packages that lack one
 - Include at minimum: XML declaration, `<pkgmetadata>` root, `<maintainer>` block
 - Use the overlay's default maintainer email if known, otherwise use a placeholder
+
+### Other task modes (per the loaded reference)
+
+Beyond clean/refresh/audit, you may receive one of these from the `clean` or
+`bootstrap` reference — follow the reference's payload:
+
+- **bootstrap**: create a new overlay skeleton (`profiles/repo_name`,
+  `profiles/categories`, `metadata/layout.conf`). Never overwrite an existing
+  `metadata/layout.conf`. See `references/bootstrap.md`.
+- **news**: author a GLEP 42 news item under `metadata/news/` from the
+  `assets/templates/news-item.txt` template.
+- **updates**: record package moves in `profiles/updates/<Qn-YYYY>`
+  (`move <old> <new>`, `slotmove <atom> <old> <new>`).
+- **mask**: edit `profiles/package.mask` with a mandatory author/date/reason
+  comment above the atom.
 
 ### Step 3 — Report
 

@@ -1,7 +1,7 @@
 # Copyright 1999-@@YEAR@@ Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=8
+EAPI=@@EAPI@@
 
 CRATES="
 @@CRATES_LIST@@
@@ -21,7 +21,7 @@ else
 	SRC_URI="@@SRC_URI@@
 		${CARGO_CRATE_URIS}
 	"
-	KEYWORDS="~amd64"
+	KEYWORDS="@@KEYWORDS@@"
 fi
 
 # License for the package itself + dependent crates

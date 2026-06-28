@@ -13,8 +13,7 @@ Invoque `ebuild-editor` via tool `Agent` com:
 1. **Task**: descrição precisa da mudança (`add USE flag X`, `add patch Y`, `fix dep Z`, `bump dep min version`, `add src_install hook`, etc.)
 2. **Target ebuild**: path absoluto do ebuild a modificar
 3. **Profile content**: o markdown do profile carregado pela skill
-4. **Gotchas**: `${CLAUDE_PLUGIN_ROOT}/references/gotchas.md` quando relevante
-5. **Reference loading hints**: aponte qual reference do plugin o sub-agent deve consultar:
+4. **Reference loading hints**: aponte qual reference do plugin o sub-agent deve consultar:
    - `${CLAUDE_PLUGIN_ROOT}/references/eclass-guide.md` → escolha/troca de eclass
    - `${CLAUDE_PLUGIN_ROOT}/references/dependency-syntax.md` → blocos USE-conditional, REQUIRED_USE, slot deps
    - `${CLAUDE_PLUGIN_ROOT}/references/language-ecosystems.md` → Go/Rust/Java/Python/Ruby/Perl/Electron

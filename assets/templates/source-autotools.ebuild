@@ -1,7 +1,7 @@
 # Copyright 1999-@@YEAR@@ Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=8
+EAPI=@@EAPI@@
 
 DESCRIPTION="@@DESCRIPTION@@"
 HOMEPAGE="@@HOMEPAGE@@"
@@ -9,7 +9,7 @@ SRC_URI="@@SRC_URI@@"
 
 LICENSE="@@LICENSE@@"
 SLOT="@@SLOT@@"
-KEYWORDS="~amd64"
+KEYWORDS="@@KEYWORDS@@"
 IUSE="@@IUSE@@"
 
 DEPEND="@@DEPEND@@"

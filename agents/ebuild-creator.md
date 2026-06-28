@@ -7,7 +7,6 @@ description: >
 effort: high
 maxTurns: 25
 tools: Read, Write, Edit, Bash, Glob, Grep
-disallowedTools: WebFetch
 isolation: worktree
 color: blue
 skills:
@@ -32,15 +31,19 @@ Inspect the upstream source or repository to determine:
 
 ### Step 2 — Select Template
 
-Choose the appropriate template from `${CLAUDE_PLUGIN_ROOT}/assets/templates/` based
-on the build system detected. Read the template file before filling it in.
+If the calling skill passed a template path (the router selects one from the
+`create` reference), use it. Otherwise choose the appropriate template from
+`${CLAUDE_PLUGIN_ROOT}/assets/templates/` based on the build system detected.
+Read the template file before filling it in.
 
 ### Step 3 — Generate Ebuild
 
 Render the chosen template via `render-template.sh` so that placeholder
-substitution (`@@YEAR@@`, `@@MAINTAINER_*@@`, `@@KEYWORDS@@`, etc.) is uniform
-and reads `userConfig` values from the canonical `CLAUDE_PLUGIN_OPTION_*` env
-vars:
+substitution (`@@YEAR@@`, `@@EAPI@@`, `@@MAINTAINER_*@@`, `@@KEYWORDS@@`, etc.)
+is uniform and reads `userConfig` values from the canonical
+`CLAUDE_PLUGIN_OPTION_*` env vars. `@@EAPI@@` defaults to 8; export `EAPI=9`
+only when the detected overlay allows it (check `eapis-banned` /
+`eapis-deprecated` in `metadata/layout.conf`):
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/scripts/render-template.sh \
@@ -51,8 +54,9 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/render-template.sh \
 ```
 
 Then fill in any remaining package-specific bits (DEPEND/RDEPEND/BDEPEND,
-phase function tweaks). Live (9999) ebuilds always have empty KEYWORDS — the
-template `live-snapshot.ebuild` enforces this.
+phase function tweaks). For a live (9999) ebuild, leave KEYWORDS unset
+(omit the line entirely) — the live/snapshot template only keywords the
+non-9999 branch via `@@KEYWORDS@@`.
 
 ### Step 4 — Generate metadata.xml
 

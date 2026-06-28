@@ -1,7 +1,7 @@
 # Copyright 1999-@@YEAR@@ Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=8
+EAPI=@@EAPI@@
 
 # MY_PN=@@UPSTREAM_NAME@@  # Uncomment if upstream name differs
 inherit @@INHERIT@@
@@ -12,7 +12,7 @@ if [[ ${PV} == *9999* ]]; then
 else
 	GIT_COMMIT="@@COMMIT@@"
 	SRC_URI="@@SRC_URI_BASE@@/archive/${GIT_COMMIT}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64"
+	KEYWORDS="@@KEYWORDS@@"
 	S="${WORKDIR}/@@SOURCE_DIR@@"
 fi
 

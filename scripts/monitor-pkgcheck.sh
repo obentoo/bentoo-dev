@@ -30,7 +30,9 @@ fi
 
 LAST_HASH=""
 while :; do
-    OUT=$(cd "$OVERLAY" && pkgcheck scan --keywords=error 2>/dev/null || true)
+    # OVERLAY was validated as a directory above; pkgcheck exits non-zero when
+    # it finds issues, so fall back to empty output instead of aborting.
+    OUT=$(cd "$OVERLAY" && pkgcheck scan --keywords=error 2>/dev/null) || OUT=""
     if [[ -n "$OUT" ]]; then
         H=$(printf '%s' "$OUT" | sha256sum | awk '{print $1}')
         if [[ "$H" != "$LAST_HASH" ]]; then
