@@ -12,7 +12,7 @@ if [[ ${PV} == *9999* ]]; then
 else
 	GIT_COMMIT="@@COMMIT@@"
 	SRC_URI="@@SRC_URI_BASE@@/archive/${GIT_COMMIT}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64"
+	KEYWORDS="@@KEYWORDS@@"
 	S="${WORKDIR}/@@SOURCE_DIR@@"
 fi
 
