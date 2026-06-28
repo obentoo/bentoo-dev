@@ -71,19 +71,19 @@ src_compile() {
 When the package requires modules not easily fetched during build (all Go modules must be vendored for Portage's network-less sandbox):
 
 ```bash
-# go-module eclass fetches modules automatically if you provide EGO_SUM
-# For large projects, create a vendor tarball instead:
-# 1. go mod download
-# 2. tar czf ${P}-vendor.tar.gz vendor/
-# 3. Upload to your distfiles server
+# EGO_SUM is DEPRECATED — go-module emits a fatal QA notice for it. Ship a
+# vendored dependency tarball instead (all Go modules must be vendored for
+# Portage's network-less sandbox):
+# 1. go mod vendor
+# 2. tar caf ${P}-deps.tar.xz vendor/
+# 3. Upload to your distfiles server (or use a hosted -deps tarball)
 
 SRC_URI="
     https://github.com/foo/bar/archive/v${PV}.tar.gz -> ${P}.tar.gz
-    https://dev.gentoo.org/~maintainer/distfiles/${P}-vendor.tar.gz
+    https://dev.gentoo.org/~maintainer/distfiles/${P}-deps.tar.xz
 "
-
-# go-module eclass with EGO_SUM (auto-generates the vendor tarball entries):
-# Populate EGO_SUM with output of: go mod download -json | jq -r '"\(.Path) \(.Version) \(.Hash)"'
+# The go-module eclass sets GOFLAGS=-mod=vendor; the unpacked vendor/ tree is
+# used directly. Do not use EGO_SUM.
 ```
 
 ### S= Pattern
@@ -104,7 +104,11 @@ S=${WORKDIR}/${P#prefix-}         # strip package prefix (as in docker-buildx)
 
 ## Rust
 
-### Eclass: cargo + rust-toolchain
+### Eclass: cargo
+
+The modern `cargo.eclass` pulls in the Rust toolchain infrastructure itself —
+do **not** also `inherit rust-toolchain` (that is the legacy path). Declare the
+minimum compiler with `RUST_MIN_VER`.
 
 **Pattern**:
 ```bash
@@ -120,7 +124,7 @@ CRATES="
 
 RUST_MIN_VER="1.80.0"
 
-inherit cargo rust-toolchain
+inherit cargo
 
 SRC_URI="
     https://github.com/author/tool/archive/v${PV}.tar.gz -> ${P}.tar.gz
@@ -191,7 +195,7 @@ CARGO_OPTIONAL=1
 RUST_MIN_VER="1.82.0"
 RUST_OPTIONAL=1   # only needed with llvm USE flag
 
-inherit cargo rust-toolchain
+inherit cargo
 
 CRATES="
     paste@1.0.14

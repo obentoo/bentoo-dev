@@ -1,7 +1,7 @@
 # Copyright 1999-@@YEAR@@ Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=8
+EAPI=@@EAPI@@
 
 inherit desktop pax-utils unpacker xdg
 
@@ -15,7 +15,7 @@ S="${WORKDIR}"
 
 LICENSE="@@LICENSE@@"
 SLOT="0"
-KEYWORDS="-* ~amd64 ~arm64"
+KEYWORDS="-* @@KEYWORDS@@"
 IUSE="@@IUSE@@"
 RESTRICT="bindist mirror strip"
 
@@ -26,16 +26,21 @@ RDEPEND="
 QA_PREBUILT="*"
 
 src_install() {
-	# Install application to /opt
+	# Install application payload to /opt. Adjust the source path to wherever
+	# the .deb stages the app (commonly usr/share/<pkg> or usr/lib/<pkg>).
 	dodir /opt/@@PKG_NAME@@
 	cp -ar usr/share/@@PKG_NAME@@/. "${D}/opt/@@PKG_NAME@@/" || die
 
-	# Sandbox and PaX
-	fperms 4711 /opt/@@PKG_NAME@@/chrome-sandbox
-	pax-mark m /opt/@@PKG_NAME@@/@@BINARY@@
+	# --- Electron/Chromium apps only -------------------------------------
+	# Chromium-based apps ship a setuid chrome-sandbox helper and need a PaX
+	# MPROTECT exception. Uncomment for Electron/Chromium payloads; leave
+	# commented for ordinary .deb packages (fperms dies if the file is absent).
+	# fperms 4711 /opt/@@PKG_NAME@@/chrome-sandbox
+	# pax-mark m /opt/@@PKG_NAME@@/@@BINARY@@
+	# ---------------------------------------------------------------------
 
-	# Symlink binary
-	dosym ../@@PKG_NAME@@/bin/@@BINARY@@ /opt/bin/@@BINARY@@
+	# Symlink binary (adjust the in-package path to the real executable).
+	dosym ../@@PKG_NAME@@/@@BINARY@@ /opt/bin/@@BINARY@@
 
 	# Desktop integration
 	domenu usr/share/applications/@@PKG_NAME@@.desktop

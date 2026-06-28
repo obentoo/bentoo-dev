@@ -1,7 +1,7 @@
 # Copyright 1999-@@YEAR@@ Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=8
+EAPI=@@EAPI@@
 
 DESCRIPTION="@@DESCRIPTION@@"
 HOMEPAGE="@@HOMEPAGE@@"
@@ -13,18 +13,15 @@ S="${WORKDIR}"
 
 LICENSE="@@LICENSE@@"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="-* @@KEYWORDS@@"
 RESTRICT="bindist mirror strip"
 
 QA_PREBUILT="opt/bin/@@BINARY_NAME@@"
 
 RDEPEND="@@RDEPEND@@"
 
-src_compile() {
-	:
-}
-
 src_install() {
+	# Only one arch's SRC_URI is fetched, so ${A} holds exactly that file.
 	exeinto /opt/bin
-	newexe "${DISTDIR}/${A[0]}" @@BINARY_NAME@@
+	newexe "${DISTDIR}/${A}" @@BINARY_NAME@@
 }

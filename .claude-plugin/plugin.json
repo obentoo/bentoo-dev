@@ -47,5 +47,8 @@
       "title": "Preferred overlay path",
       "description": "Optional default overlay path; auto-detected if empty."
     }
+  },
+  "experimental": {
+    "monitors": "./monitors/monitors.json"
   }
 }

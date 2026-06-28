@@ -212,13 +212,15 @@ src_install() {
 
 ---
 
-### rust-toolchain
+### Minimum Rust version
 
-**When to use**: Package requires a minimum Rust version.
+**When to use**: Package requires a minimum Rust version. Set `RUST_MIN_VER`
+together with `inherit cargo` — the legacy `rust-toolchain` eclass is no longer
+the canonical path and should not be inherited.
 
 ```bash
 RUST_MIN_VER="1.82.0"
-inherit rust-toolchain
+inherit cargo
 ```
 
 ---

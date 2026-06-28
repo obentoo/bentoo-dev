@@ -34,9 +34,16 @@ Entry point único para operações em ebuilds e overlays Gentoo. Recebe instru�
 
 !`bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-overlay.sh 2>/dev/null || echo "No overlay detected"`
 
-Use o nome detectado para escolher o profile que será passado ao sub-agent:
-- Se `bentoo`: `${CLAUDE_PLUGIN_ROOT}/assets/profiles/bentoo.md`
-- Caso contrário: `${CLAUDE_PLUGIN_ROOT}/assets/profiles/default.md`
+Escolha o profile a partir das **convenções reais do overlay detectado** (saída
+acima: `masters`, `thin-manifests`, `manifest-hashes`, eclasses custom), não do
+nome:
+- Se existir `${CLAUDE_PLUGIN_ROOT}/assets/profiles/<nome-detectado>.md`, use-o
+  como exemplo específico daquele overlay (ex.: `bentoo.md`).
+- Caso contrário, use `${CLAUDE_PLUGIN_ROOT}/assets/profiles/default.md`, que é
+  auto-suficiente e segue apenas política Gentoo oficial.
+
+Sempre prefira o que o `layout.conf`/`profiles/` do overlay declara sobre
+qualquer convenção assumida pelo profile de exemplo.
 
 ## User input
 
