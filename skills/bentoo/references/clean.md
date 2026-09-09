@@ -33,7 +33,9 @@ Invoke `overlay-maintainer` through the `Agent` tool with:
 4. **Safety flags**:
    - **NEVER** remove live ebuilds (`*-9999.ebuild`)
    - **NEVER** empty a package directory (always keep the newest version)
-   - Ask for extra confirmation when the scope is `--all` AND the mode is destructive (`clean`)
+   - State explicitly that confirmation was already obtained, so the sub-agent
+     does not try to ask for it. It cannot: confirmation is the router's job
+     (see below), and the sub-agent has no interactive channel of its own.
 
 ## Required arguments
 
@@ -41,7 +43,12 @@ Before delegating, make sure you have:
 - `<scope>`: a specific `<category/package>` or `--all`
 - The intended mode (if ambiguous, ask: "prune old versions, regenerate manifests, or a full audit?")
 
-When the scope is `--all` and the mode is `clean`, ask the user for explicit confirmation before delegating — that is a destructive action at scale.
+When the scope is `--all` and the mode is `clean`, ask the user for explicit
+confirmation **before delegating** — that is a destructive action at scale, and
+this is the only point in the flow where a question can be asked. The router
+runs inline and can prompt; the sub-agent runs in its own context and cannot.
+Never delegate a destructive `--all` on the assumption that the sub-agent will
+check with the user.
 
 ## Post-action
 

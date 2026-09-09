@@ -7,8 +7,9 @@ model: sonnet
 effort: medium
 maxTurns: 30
 tools: Read, Write, Edit, Bash, Glob, Grep
-background: true
 memory: project
+experimental:
+  cacheTtl: 1h
 color: orange
 skills:
   - bentoo-dev:gotchas
@@ -100,6 +101,16 @@ Provide a structured summary:
 - Final state: number of packages now clean
 
 ---
+
+## This agent never prompts
+
+Every confirmation is obtained by the router **before** you are invoked. If a
+destructive scope reaches you, treat it as already approved and proceed; if
+something is genuinely ambiguous, stop and report rather than guessing.
+
+This is why the agent no longer declares `background: true`: a background
+subagent loses `AskUserQuestion` entirely, so a design that expected it to ask
+could never work. Confirmation belongs upstream, in the inline router.
 
 ## Safety Rules
 

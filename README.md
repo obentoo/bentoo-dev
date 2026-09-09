@@ -25,7 +25,16 @@ A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlay
 | `claude plugin tag` (release publishing)                    | v2.1.118        |
 | `displayName` manifest field                                | v2.1.143        |
 | `additionalContext` from `Stop`/`SubagentStop`              | v2.1.163        |
-| Spec target overall                                          | **v2.1.119+**   |
+| Exec-form hooks (`"args": []`) + `statusMessage`            | v2.1.163        |
+| `if:` conditions scoped correctly to the matched command    | v2.1.259        |
+| Spec target overall                                          | **v2.1.259+**   |
+
+The overall target is the highest entry, not a lower one: the plugin uses every
+feature listed. v2.1.259 in particular fixed *"hook `if` conditions like
+`Bash(cat *)` firing on unrelated Bash commands"* — this plugin routes six hooks
+through `if: Bash(cp *)` / `(mv *)` / `(sed *)`, so on earlier versions those
+fire on unrelated commands. The scripts exit 0 when they find no `.ebuild`, so
+the behaviour is correct either way; only the wasted spawns differ.
 
 ---
 
@@ -175,8 +184,19 @@ bentoo-dev/
 
 All scripts read the canonical hook JSON payload from stdin, emit
 `hookSpecificOutput` JSON shapes (`permissionDecision` / `additionalContext` /
-`sessionTitle` / `{decision: "block", reason}`) on stdout, and exit 0.
+`sessionTitle` / `{decision: "block", reason}`) on stdout, and exit 0. A hook
+whose stdout parses and validates decides the outcome regardless of exit code.
+
+Every hook uses **exec form** (`"args": []`): Claude Code spawns the script
+directly with no shell, so there is no quoting to get wrong on a plugin path
+containing a space. `${CLAUDE_PLUGIN_ROOT}` is substituted in both forms, and
+both export it on the spawned process. Each hook also declares a
+`statusMessage`, so the spinner names what is running.
+
 The `Stop` and `SubagentStop` hooks honour the `stop_hook_active` loop guard.
+Claude Code overrides a `Stop` hook after **eight** consecutive blocks; raise
+that with `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` if a convergence legitimately needs
+more.
 
 ### Context budget: the overlay summary is bounded on purpose
 
@@ -234,17 +254,41 @@ The hook still escalates recursive/globbed `rm` near `.ebuild` files to an
 
 ### Checkpointing caveat
 
-Claude Code checkpoints (`/rewind`) **do not** track files changed by Bash
-commands (`rm`, `mv`, `cp`, `sed`) — only `Write`/`Edit`/`NotebookEdit`. A
-`Manifest` regenerated via `ebuild … manifest`, or an `.ebuild` moved with
-`cp`/`mv`, will **not** be undone by a rewind. This is the reason the plugin
-ships dedicated Manifest-staleness hooks rather than relying on checkpoints.
+Two limitations stack here, and together they mean **nothing this plugin
+produces is recoverable with `/rewind`**:
 
-### Scheduling `pkgcheck`
+1. Checkpoints **do not** track files changed by Bash commands (`rm`, `mv`,
+   `cp`, `sed`) — only `Write`/`Edit`/`NotebookEdit`. A `Manifest` regenerated
+   via `ebuild … manifest`, or an `.ebuild` copied with `cp`, is not undone.
+2. Checkpoints **do not restore subagent edits** either. Per the
+   [checkpointing docs](https://code.claude.com/docs/en/checkpointing), only a
+   forked skill running in the foreground has its edits restored; for any other
+   subagent, *"rewinding doesn't restore the edits. Use git to revert them."*
+   Every write in this plugin happens inside one of the five sub-agents.
 
-`scripts/scheduled-pkgcheck.sh` needs the local overlay on disk, so wire it via
-`/loop` (e.g. `/loop 1h …`) or a **Desktop scheduled task** — **not** `/schedule`
-(cloud Routines run in a fresh clone with no access to your local overlay).
+So `/rewind` is not a safety net for overlay work. **Use git.** This is why the
+plugin ships deterministic Manifest-staleness and rm-safety hooks instead of
+relying on checkpoints, and why `safety-rm-check.sh` denies rather than warns.
+
+### Recurring `pkgcheck`
+
+There is one pkgcheck path: the **`pkgcheck-watch` monitor**, started on
+`bentoo` skill invocation. It scans the cached overlay, notifies on new
+ERROR-level findings, and appends each new result to
+`${CLAUDE_PLUGIN_DATA}/pkgcheck.log`.
+
+A monitor is the native mechanism for this. The
+[scheduled-tasks docs](https://code.claude.com/docs/en/scheduled-tasks) put it
+plainly: a monitor *"avoids polling altogether and is often more token-efficient
+and responsive than re-running a prompt on an interval."* A second, cron-driven
+script used to duplicate the same scan; it was removed rather than left to drift.
+
+Tune the interval with `BENTOO_DEV_PKGCHECK_INTERVAL` (seconds, default 300).
+
+If you do want a schedule that outlives the session, note that cloud
+[Routines](https://code.claude.com/docs/en/routines) **cannot** serve this: they
+run in a fresh clone with no access to your local overlay. Use a
+**Desktop scheduled task** or `/loop`, both of which run on your machine.
 
 ---
 

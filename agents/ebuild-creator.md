@@ -7,8 +7,9 @@ description: >
 effort: high
 maxTurns: 25
 tools: Read, Write, Edit, Bash, Glob, Grep
-isolation: worktree
 color: blue
+experimental:
+  cacheTtl: 1h
 skills:
   - bentoo-dev:gotchas
 ---
@@ -70,6 +71,12 @@ Use the metadata.xml template from `${CLAUDE_PLUGIN_ROOT}/assets/templates/`. Fi
 
 Create `category/package/` under the overlay root. Create `files/` subdirectory
 only if patches or auxiliary files are needed.
+
+Write into the overlay the caller named — do not stage the work anywhere else.
+This agent deliberately does **not** declare `isolation: worktree`: a worktree
+branches from the repository's default branch rather than the session's HEAD,
+and its changes never merge back on their own, so the ebuild would land in a
+throwaway checkout instead of the overlay the user asked about.
 
 ### Step 6 — Generate Manifest
 

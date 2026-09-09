@@ -1,5 +1,5 @@
 {
-  "description": "bentoo-dev: deterministic safety, lint, and Manifest-staleness gates for Gentoo overlays.",
+  "description": "bentoo-dev: deterministic safety, lint, and Manifest-staleness gates for Gentoo overlays. Every hook uses exec form (\"args\": []) so the command is spawned directly, with no shell to quote paths for.",
   "hooks": {
     "SessionStart": [
       {
@@ -7,7 +7,9 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/cache-overlay.sh",
-            "timeout": 10
+            "timeout": 10,
+            "args": [],
+            "statusMessage": "Detecting Gentoo overlay…"
           }
         ]
       }
@@ -18,7 +20,9 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/cleanup-cache.sh",
-            "timeout": 5
+            "timeout": 5,
+            "args": [],
+            "statusMessage": "Clearing overlay cache…"
           }
         ]
       }
@@ -29,7 +33,9 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/cache-overlay.sh",
-            "timeout": 10
+            "timeout": 10,
+            "args": [],
+            "statusMessage": "Detecting Gentoo overlay…"
           }
         ]
       }
@@ -40,7 +46,9 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session-title.sh",
-            "timeout": 5
+            "timeout": 5,
+            "args": [],
+            "statusMessage": "Naming session…"
           }
         ]
       }
@@ -52,7 +60,9 @@
           {
             "type": "command",
             "if": "Bash(rm *)",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/safety-rm-check.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/safety-rm-check.sh",
+            "args": [],
+            "statusMessage": "Checking ebuild removal safety…"
           }
         ]
       },
@@ -62,7 +72,9 @@
           {
             "type": "command",
             "if": "Bash(git rm *)",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/safety-rm-check.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/safety-rm-check.sh",
+            "args": [],
+            "statusMessage": "Checking ebuild removal safety…"
           }
         ]
       }
@@ -73,11 +85,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh",
+            "args": [],
+            "statusMessage": "Linting ebuild…"
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh",
+            "args": [],
+            "statusMessage": "Checking Manifest freshness…"
           }
         ]
       },
@@ -87,32 +103,44 @@
           {
             "type": "command",
             "if": "Bash(cp *)",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh",
+            "args": [],
+            "statusMessage": "Linting ebuild…"
           },
           {
             "type": "command",
             "if": "Bash(mv *)",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh",
+            "args": [],
+            "statusMessage": "Linting ebuild…"
           },
           {
             "type": "command",
             "if": "Bash(sed *)",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh",
+            "args": [],
+            "statusMessage": "Linting ebuild…"
           },
           {
             "type": "command",
             "if": "Bash(cp *)",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh",
+            "args": [],
+            "statusMessage": "Checking Manifest freshness…"
           },
           {
             "type": "command",
             "if": "Bash(mv *)",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh",
+            "args": [],
+            "statusMessage": "Checking Manifest freshness…"
           },
           {
             "type": "command",
             "if": "Bash(sed *)",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-reminder.sh",
+            "args": [],
+            "statusMessage": "Checking Manifest freshness…"
           }
         ]
       }
@@ -123,7 +151,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-failure-diagnose.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-failure-diagnose.sh",
+            "args": [],
+            "statusMessage": "Diagnosing manifest failure…"
           }
         ]
       }
@@ -134,7 +164,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/ebuild-creator-validate.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/ebuild-creator-validate.sh",
+            "args": [],
+            "statusMessage": "Verifying created package…"
           }
         ]
       }
@@ -144,7 +176,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-stale-check.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/manifest-stale-check.sh",
+            "args": [],
+            "statusMessage": "Checking for stale Manifests…"
           }
         ]
       }
@@ -154,7 +188,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/stopfailure-log.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/stopfailure-log.sh",
+            "args": [],
+            "statusMessage": "Logging turn failure…"
           }
         ]
       }
@@ -164,7 +200,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/precompact-reinject-overlay.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/precompact-reinject-overlay.sh",
+            "args": [],
+            "statusMessage": "Preserving overlay context…"
           }
         ]
       }
