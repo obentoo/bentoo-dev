@@ -9,6 +9,84 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
+## [0.3.0] — 2026-09-09
+
+Context-budget and hook-correctness release. The skill now injects a bounded
+overlay summary instead of a verbatim dump, three silent hook defects are fixed,
+and the shipped `bentoo` profile is realigned with the overlay's own
+`CLAUDE.md`. All prose in the skill is now English.
+
+### Breaking
+
+- **`detect-overlay.sh` defaults to `--summary`.** It previously dumped
+  `metadata/layout.conf` and `profiles/package.mask` verbatim. Anything parsing
+  the old output — including via `bin/gentoo-overlay-detect` — must pass
+  `--full` to get it back.
+- **Missing `SLOT` or `LICENSE` is now an error, not a warning**, per PMS (SLOT
+  has no implicit default in EAPI 8). A pipeline treating `quick-lint.sh` as a
+  gate will start failing ebuilds that previously passed. `LICENSE` is exempt
+  for `virtual/*`, `acct-user/*` and `acct-group/*`, which install no files.
+
+### Added
+
+- `scripts/overlay-context.sh` — serves the cached overlay summary to the skill,
+  with `--full` for the verbatim `layout.conf` + `package.mask` dump that only
+  the `clean` / `mask` intents need.
+- `scripts/lib/hook-common.sh` — shared hook payload/target resolution.
+- `quick-lint.sh --json` — batch report consumed by `qa-checker` so the seven
+  mechanical checks cost no tokens. Adds a copyright-year warning.
+- `egencache` handling: a bump step in `ebuild-bumper` and a `refresh-cache`
+  mode in `overlay-maintainer`, for overlays that keep a `metadata/md5-cache`.
+- `qa-checker` runs the overlay's own `check-*.sh` / `*-parity.sh` scripts when
+  present — they catch failures that pass `pkgcheck` and merge cleanly.
+- `bootstrap` eval and trigger-query coverage; seven hook evals for the
+  behaviours fixed here.
+
+### Changed
+
+- The overlay summary gained `profile-formats`, `eapis-banned`,
+  `eapis-deprecated` and the overlay's verification-script list;
+  `detect-overlay.sh` now reads `profiles/eapi`, which is authoritative over
+  `profile-eapi-when-unspecified`.
+- `assets/profiles/bentoo.md` rewritten from the overlay's `CLAUDE.md`: the
+  OpenRC-for-every-daemon rule, the inverted mask/unmask atom semantics under
+  `profile-repo-deps`, `~arm64` as the default rather than the exception,
+  `pkgdev manifest` requiring an explicit target, and the working rules
+  (checkout is not what Portage reads; no sudo; one worktree per session).
+- `bootstrap.md` no longer treats `profiles/categories` as mandatory.
+- The `bentoo` skill and its six intent references are in English. Portuguese
+  trigger phrases are retained as match strings, labelled `PT triggers:`, with
+  English equivalents added where they were missing.
+- Router `effort` lowered from `high` to `medium` — it classifies and delegates;
+  the sub-agents declare their own.
+
+### Fixed
+
+- **The six `PostToolUse` hooks matched on `Bash(cp|mv|sed)` were silent
+  no-ops.** They read `tool_input.file_path`, which a Bash payload never
+  carries. The `ebuild-bumper` flow — whose Step 2 is `cp old.ebuild
+  new.ebuild` — therefore ran with no lint and no Manifest reminder.
+- **`eapply_user` was checked with a file-wide grep**, so any
+  `--enable-default-foo` elsewhere in the ebuild satisfied it. Now scoped to the
+  `src_prepare()` body.
+- **`ebuild-creator-validate.sh` reported "validation passed" for zero packages
+  examined.** It now distinguishes blocked / passed / inconclusive, and searches
+  the subagent's cwd as well as the cached overlay root — `ebuild-creator`
+  declares `isolation: worktree`, so its files never land in the cached root.
+- `evals/*.json` referenced five skills removed in the v0.2.0 consolidation.
+- README undercounted the intents (five, not six) and the hook events (5, not
+  11), and its hooks table omitted `StopFailure` and `PreCompact`.
+
+### Performance
+
+| | Before | After |
+|---|---:|---:|
+| Context injected per skill invocation | 16,987 B | 1,387 B (−92%) |
+| `Stop` hook, per turn (375-ebuild overlay) | 992 ms | 174 ms (−82%) |
+
+Measured against `/var/db/repos/bentoo`. Stop-hook output verified identical to
+the previous implementation on the real overlay and on thick/thin fixtures.
+
 ## [0.2.0] — 2026-06-28
 
 Overlay-agnostic generalization, EAPI 9 support, and bug fixes. The plugin now
