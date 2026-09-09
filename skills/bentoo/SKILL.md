@@ -5,24 +5,16 @@ description: >
   Takes a natural-language instruction, routes it to the right operation
   (create / bump / edit / QA / clean overlay), and asks when it is ambiguous.
 when_to_use: >
-  Use for ANY operation on Gentoo ebuilds or overlays. The trigger phrases below
-  are match strings, not prose — the Portuguese ones are intentional and must
-  not be translated away.
-  EN triggers: "create ebuild", "new package", "package from source/deb/AppImage/git",
+  Use for ANY operation on Gentoo ebuilds or overlays. Triggers:
+  "create ebuild", "new package", "package from source/deb/AppImage/git",
   "bump version", "update package", "bump mesa to 26.0.5", "snapshot bump",
   "new version", "update ebuild", "edit ebuild", "add USE flag",
-  "fix dependencies", "add patch", "modify src_install", "fix build with gcc-15",
-  "check QA", "validate ebuild", "lint ebuild", "pkgcheck", "audit ebuild",
-  "clean overlay", "remove old versions", "regenerate manifests",
-  "fix overlay health", "create news item", "record pkgmove", "new overlay",
-  "bootstrap overlay", "init repository".
-  PT triggers: "criar ebuild", "novo pacote", "bump version",
-  "atualizar pacote", "atualizar mesa para 26.0.5", "snapshot bump",
-  "nova versão", "editar ebuild", "add USE flag", "fix dependencies",
-  "adicionar patch", "modificar src_install", "verificar QA", "validar ebuild",
-  "lint ebuild", "audit ebuild", "limpar overlay", "remover versões antigas",
-  "regenerar manifests", "criar news item", "registrar pkgmove",
-  "criar overlay novo", "bootstrap overlay".
+  "fix dependencies", "add patch", "modify src_install",
+  "fix build with gcc-15", "check QA", "validate ebuild", "lint ebuild",
+  "pkgcheck", "audit ebuild", "clean overlay", "prune old versions",
+  "remove old versions", "regenerate manifests", "refresh manifests",
+  "fix overlay health", "create news item", "record pkgmove", "package move",
+  "mask a package", "new overlay", "bootstrap overlay", "init repository".
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent
 argument-hint: "<natural-language instruction>"
 effort: medium

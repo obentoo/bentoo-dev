@@ -4,8 +4,8 @@
       "create an ebuild for dev-util/foo from this CMake repo on github",
       "package this AppImage at https://example.com/bar.AppImage as app-editors/bar-2.5",
       "I have a Rust project at /tmp/myapp; can you write a Gentoo ebuild for it?",
-      "criar ebuild para o pacote x11-misc/baz versão 0.9.1 a partir do tarball oficial",
-      "novo pacote: media-libs/quux usando meson, KEYWORDS ~amd64",
+      "write an ebuild for x11-misc/baz 0.9.1 from the official upstream tarball",
+      "new package: media-libs/quux using meson, KEYWORDS ~amd64",
       "make me an ebuild from this .deb https://downloads.example.com/cursor_3.2_amd64.deb",
       "package XYZ from source as a Gentoo ebuild (autotools)"
     ],
@@ -18,9 +18,9 @@
   "edit": {
     "should_trigger": [
       "add a wayland USE flag to app-editors/cursor and wire the conditional dependency",
-      "editar dev-util/glslang para incluir o patch fix-build-gcc15.patch em PATCHES",
-      "modificar o src_install do media-libs/foo para instalar o ícone em 256x256",
-      "adicionar dependência de virtual/jpeg em x11-misc/bar com slot operator",
+      "edit dev-util/glslang to add fix-build-gcc15.patch to PATCHES",
+      "change src_install in media-libs/foo to install the icon at 256x256",
+      "add a virtual/jpeg dependency to x11-misc/bar with a slot operator",
       "fix dependencies: replace dev-libs/openssl with dev-libs/openssl:0= in qemu",
       "remove the gnome USE flag from app-misc/baz and clean up the conditional deps"
     ],
@@ -32,9 +32,9 @@
   "bump": {
     "should_trigger": [
       "bump dev-util/glslang from 1.4.341.0 to 1.4.342.0 (standard semver)",
-      "atualizar app-editors/cursor para 0.45.2 e remover a versão antiga",
-      "snapshot bump: media-libs/quux _p20260420 → _p20260425, novo commit abc123def456",
-      "nova versão de x11-misc/foo: 2.5.0, mantendo as antigas",
+      "update app-editors/cursor to 0.45.2 and drop the old version",
+      "snapshot bump: media-libs/quux _p20260420 -> _p20260425, new commit abc123def456",
+      "new version of x11-misc/foo: 2.5.0, keeping the older ones",
       "update brave-browser to 1.89, regenerate Manifest"
     ],
     "should_not_trigger": [
@@ -44,7 +44,7 @@
   },
   "clean": {
     "should_trigger": [
-      "limpar o overlay bentoo: remover versões antigas e regenerar todos os Manifests",
+      "clean the bentoo overlay: prune old versions and regenerate every Manifest",
       "scan the overlay for packages missing metadata.xml and create them",
       "clean stale DIST entries from Manifests across all packages",
       "remove old versions of app-editors/cursor, keep only latest",
@@ -58,11 +58,11 @@
   "qa": {
     "should_trigger": [
       "run QA check on dev-util/glslang",
-      "verificar QA do pacote media-libs/foo",
+      "run a QA check on media-libs/foo",
       "lint this ebuild: /var/db/repos/bentoo/app-editors/bar/bar-1.0.ebuild",
       "rodar pkgcheck no diretório x11-misc/baz",
       "audit ebuild quality across the overlay",
-      "validar todos os ebuilds antes do commit"
+      "validate every ebuild before committing"
     ],
     "should_not_trigger": [
       "explain pkgcheck",
@@ -74,8 +74,8 @@
       "bootstrap a new Gentoo overlay at ~/myoverlay",
       "create a new overlay repository from scratch",
       "init an ebuild repository with masters = gentoo",
-      "criar overlay novo em ~/meuoverlay",
-      "quero iniciar um repositório de ebuilds do zero"
+      "set up a new overlay at ~/myoverlay",
+      "I want to start an ebuild repository from scratch"
     ],
     "should_not_trigger": [
       "create an ebuild for dev-libs/foo",

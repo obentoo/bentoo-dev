@@ -2,8 +2,8 @@
 
 A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlays**. Provides specialised skills, sub-agents, hooks, monitors, and reference material for the full lifecycle of an ebuild — create, edit, bump, clean, QA-validate.
 
-> **Status:** v0.2.0 — overlay-agnostic generalization + EAPI 9 support (see `CHANGELOG.md`).
-> **Spec target:** Claude Code v2.1.119+ (works on later releases).
+> **Status:** v0.3.0 — bounded skill context, hook-correctness fixes, and component-reference conformance (see `CHANGELOG.md`).
+> **Spec target:** Claude Code v2.1.259+ (works on later releases).
 
 > **Overlay-agnostic.** Although maintained by the Bentoo project, this plugin
 > targets **any** active Gentoo overlay. Conventions are derived from the
@@ -23,11 +23,20 @@ A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlay
 | `hookSpecificOutput.sessionTitle` (UserPromptSubmit)        | v2.1.94         |
 | `monitors/monitors.json` background monitors                | v2.1.105        |
 | `claude plugin tag` (release publishing)                    | v2.1.118        |
+| Exec-form hooks (`"args": []`)                              | v2.1.139        |
 | `displayName` manifest field                                | v2.1.143        |
 | `additionalContext` from `Stop`/`SubagentStop`              | v2.1.163        |
-| Exec-form hooks (`"args": []`) + `statusMessage`            | v2.1.163        |
 | `if:` conditions scoped correctly to the matched command    | v2.1.259        |
 | Spec target overall                                          | **v2.1.259+**   |
+
+Every row above was checked against the
+[upstream CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md),
+except three that have no changelog entry and are carried over unverified:
+`bin/` auto-PATH (v2.1.91), `displayName` (v2.1.143), and the introduction of
+`permissionDecision: "ask"` (v2.1.83 — a later entry at v2.1.101 refers to it as
+already existing, so the feature is real; only the introducing version is
+unconfirmed). `statusMessage` has no changelog entry either and is therefore
+listed with no version at all rather than a guessed one.
 
 The overall target is the highest entry, not a lower one: the plugin uses every
 feature listed. v2.1.259 in particular fixed *"hook `if` conditions like

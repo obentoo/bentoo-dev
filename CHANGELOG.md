@@ -67,9 +67,14 @@ and the shipped `bentoo` profile is realigned with the overlay's own
   `pkgdev manifest` requiring an explicit target, and the working rules
   (checkout is not what Portage reads; no sudo; one worktree per session).
 - `bootstrap.md` no longer treats `profiles/categories` as mandatory.
-- The `bentoo` skill and its six intent references are in English. Portuguese
-  trigger phrases are retained as match strings, labelled `PT triggers:`, with
-  English equivalents added where they were missing.
+- **The plugin is entirely in English**, including the trigger phrases in
+  `when_to_use` and the fixtures in `evals/trigger-queries.json`. The
+  Portuguese match strings that earlier versions carried were replaced by
+  English ones of the same shape, not merely dropped, so trigger coverage is
+  unchanged in count (33 phrases, 48 fixture queries). One consequence worth
+  knowing: the skill no longer auto-triggers on a Portuguese instruction.
+  Combined `description` + `when_to_use` also fell from 1,413 to 906 of the
+  1,536-character budget, leaving room to add triggers later.
 - **All 19 hook commands use exec form (`"args": []`)** — spawned directly with
   no shell, so a plugin path containing a space cannot break them. The reference
   requires shell-form paths to be double-quoted, which none were. Monitor
@@ -83,6 +88,13 @@ and the shipped `bentoo` profile is realigned with the overlay's own
   happens inside a subagent, so `/rewind` is not a safety net for overlay work.
 - README: documented the eight-block `Stop` cap and
   `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`.
+- README: every row of the minimum-version table verified against the upstream
+  CHANGELOG. Exec-form hooks were listed at v2.1.163 with no source; the real
+  entry is **v2.1.139**. `statusMessage` has no changelog entry and is now
+  listed with no version rather than a guessed one, and the three rows that
+  cannot be sourced (`bin/` auto-PATH, `displayName`, and the introduction of
+  `permissionDecision: "ask"`) are marked unverified. The header line still
+  claimed v2.1.119+ while the table said v2.1.259+; both now say v2.1.259+.
 - Router `effort` lowered from `high` to `medium` — it classifies and delegates;
   the sub-agents declare their own.
 
