@@ -7,8 +7,9 @@ description: >
 effort: high
 maxTurns: 25
 tools: Read, Write, Edit, Bash, Glob, Grep
-isolation: worktree
 color: blue
+experimental:
+  cacheTtl: 1h
 skills:
   - bentoo-dev:gotchas
 ---
@@ -54,7 +55,13 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/render-template.sh \
 ```
 
 Then fill in any remaining package-specific bits (DEPEND/RDEPEND/BDEPEND,
-phase function tweaks). For a live (9999) ebuild, leave KEYWORDS unset
+phase function tweaks).
+
+**Delete a variable line rather than leaving it empty.** The templates ship
+`IUSE="@@IUSE@@"`, `DEPEND="@@DEPEND@@"` and friends as slots to fill; a package
+with no USE flags and no dependencies wants those lines *gone*, not rendered as
+`IUSE=""`. pkgcheck reports each one as `EmptyGlobalAssignment`. Remove the
+surrounding blank line too, or you trade that warning for `DoubleEmptyLine`. For a live (9999) ebuild, leave KEYWORDS unset
 (omit the line entirely) — the live/snapshot template only keywords the
 non-9999 branch via `@@KEYWORDS@@`.
 
@@ -70,6 +77,12 @@ Use the metadata.xml template from `${CLAUDE_PLUGIN_ROOT}/assets/templates/`. Fi
 
 Create `category/package/` under the overlay root. Create `files/` subdirectory
 only if patches or auxiliary files are needed.
+
+Write into the overlay the caller named — do not stage the work anywhere else.
+This agent deliberately does **not** declare `isolation: worktree`: a worktree
+branches from the repository's default branch rather than the session's HEAD,
+and its changes never merge back on their own, so the ebuild would land in a
+throwaway checkout instead of the overlay the user asked about.
 
 ### Step 6 — Generate Manifest
 
@@ -97,7 +110,7 @@ Load these references only when the specific situation applies — do not load a
 
 ## Critical Gotchas
 
-The 10 gotchas (eapply_user, `|| die`, KEYWORDS for 9999, `S=` matching, SRC_URI rename, QA_PREBUILT/RESTRICT, header ordering, thin-manifests, `default` in `src_prepare`, MY_P/MY_PN) are preloaded via the `bentoo-dev:gotchas` skill declared in this agent's frontmatter. Apply them when generating the ebuild — do not duplicate or paraphrase. If the skill content is missing from context (e.g., after auto-compact), re-read `${CLAUDE_PLUGIN_ROOT}/references/gotchas.md`.
+The 11 gotchas (eapply_user, `|| die`, KEYWORDS for 9999, `S=` matching, SRC_URI rename, QA_PREBUILT/RESTRICT, header ordering, thin-manifests, `default` in `src_prepare`, MY_P/MY_PN, `<stabilize-allarches/>` grep) are preloaded via the `bentoo-dev:gotchas` skill declared in this agent's frontmatter. Apply them when generating the ebuild — do not duplicate or paraphrase. If the skill content is missing from context (e.g., after auto-compact), re-read `${CLAUDE_PLUGIN_ROOT}/references/gotchas.md`.
 
 ## Canonical Gentoo Docs
 

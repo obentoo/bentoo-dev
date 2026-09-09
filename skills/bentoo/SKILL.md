@@ -1,22 +1,23 @@
 ---
 name: bentoo
 description: >
-  Manutenção completa de ebuilds e overlays Gentoo num único entry point.
-  Recebe instrução em linguagem natural e roteia para a operação correta
-  (criar / bump / editar / QA / limpar overlay), perguntando se ambígua.
+  Full maintenance of Gentoo ebuilds and overlays behind a single entry point.
+  Takes a natural-language instruction, routes it to the right operation
+  (create / bump / edit / QA / clean overlay), and asks when it is ambiguous.
 when_to_use: >
-  Use para QUALQUER operação em ebuilds ou overlay Gentoo. Triggers PT/EN:
-  "criar ebuild", "novo pacote", "package from source/deb/AppImage/git",
-  "bump version", "atualizar pacote", "atualizar mesa para 26.0.5",
-  "snapshot bump", "nova versão", "update ebuild", "editar ebuild",
-  "add USE flag", "fix dependencies", "adicionar patch", "modificar
-  src_install", "fix build with gcc-15", "verificar QA", "validar ebuild",
-  "lint ebuild", "pkgcheck", "audit ebuild", "limpar overlay", "remover
-  versões antigas", "regenerar manifests", "fix overlay health", "criar
-  news item", "registrar pkgmove", "criar overlay novo", "bootstrap overlay".
-allowed-tools: Read Write Edit Bash Glob Grep Agent
-argument-hint: "<instrução em linguagem natural>"
-effort: high
+  Use for ANY operation on Gentoo ebuilds or overlays. Triggers:
+  "create ebuild", "new package", "package from source/deb/AppImage/git",
+  "bump version", "update package", "bump mesa to 26.0.5", "snapshot bump",
+  "new version", "update ebuild", "edit ebuild", "add USE flag",
+  "fix dependencies", "add patch", "modify src_install",
+  "fix build with gcc-15", "check QA", "validate ebuild", "lint ebuild",
+  "pkgcheck", "audit ebuild", "clean overlay", "prune old versions",
+  "remove old versions", "regenerate manifests", "refresh manifests",
+  "fix overlay health", "create news item", "record pkgmove", "package move",
+  "mask a package", "new overlay", "bootstrap overlay", "init repository".
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent
+argument-hint: "<natural-language instruction>"
+effort: medium
 paths:
   - "**/*.ebuild"
   - "**/metadata.xml"
@@ -29,22 +30,38 @@ paths:
 
 # bentoo
 
-Entry point único para operações em ebuilds e overlays Gentoo. Recebe instrução em linguagem natural via `$ARGUMENTS`, classifica a intenção, pergunta ao usuário se ambígua, carrega o reference detalhado da intenção e delega ao sub-agent especializado.
+Single entry point for Gentoo ebuild and overlay work. Takes a natural-language
+instruction through `$ARGUMENTS`, classifies the intent, asks the user when it is
+ambiguous, loads the reference for that intent, and delegates to the specialised
+sub-agent.
 
 ## Overlay context (preprocessed)
 
-!`bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-overlay.sh 2>/dev/null || echo "No overlay detected"`
+!`bash ${CLAUDE_PLUGIN_ROOT}/scripts/overlay-context.sh 2>/dev/null || echo "No overlay detected"`
 
-Escolha o profile a partir das **convenções reais do overlay detectado** (saída
-acima: `masters`, `thin-manifests`, `manifest-hashes`, eclasses custom), não do
-nome:
-- Se existir `${CLAUDE_PLUGIN_ROOT}/assets/profiles/<nome-detectado>.md`, use-o
-  como exemplo específico daquele overlay (ex.: `bentoo.md`).
-- Caso contrário, use `${CLAUDE_PLUGIN_ROOT}/assets/profiles/default.md`, que é
-  auto-suficiente e segue apenas política Gentoo oficial.
+Pick the profile from the **actual conventions of the detected overlay** — the
+output above: `masters`, `thin-manifests`, `manifest-hashes`, custom eclasses —
+not from its name:
 
-Sempre prefira o que o `layout.conf`/`profiles/` do overlay declara sobre
-qualquer convenção assumida pelo profile de exemplo.
+- If `${CLAUDE_PLUGIN_ROOT}/assets/profiles/<detected-name>.md` exists, use it as
+  the worked example for that overlay (e.g. `bentoo.md`).
+- Otherwise use `${CLAUDE_PLUGIN_ROOT}/assets/profiles/default.md`, which is
+  self-contained and follows official Gentoo policy only.
+
+Whatever the overlay's own `layout.conf` / `profiles/` declares always wins over
+a convention assumed by an example profile.
+
+The block above is the **bounded summary** (~1.3 KB), served from the session
+cache written by `cache-overlay.sh`. The verbatim dump of `layout.conf` +
+`profiles/package.mask` (~17 KB on a real overlay) is **not** included: load it
+on demand, and only for the `clean` / `mask` intents, with
+
+```
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/overlay-context.sh --full
+```
+
+If the summary lists **"Overlay verification scripts"**, those belong to the
+overlay and catch failures `pkgcheck` lets through — the `qa` intent must run them.
 
 ## User input
 
@@ -52,33 +69,45 @@ qualquer convenção assumida pelo profile de exemplo.
 $ARGUMENTS
 ```
 
-## Step 1 — Classifique a intenção
+## Step 1 — Classify the intent
 
-Analise `$ARGUMENTS` e o contexto da conversa, e determine UMA das 6 intenções abaixo. **Se o input for vazio**, peça ao usuário o que deseja fazer e liste as 6 opções.
+Read `$ARGUMENTS` together with the conversation context and settle on ONE of the
+six intents below. **If the input is empty**, ask the user what they want to do
+and list the six options.
 
-| Intenção | Quando aplicar | Sub-agent | Reference |
-|----------|----------------|-----------|-----------|
-| `create` | Criar pacote novo do zero (não existe ainda no overlay). Ex: "criar ebuild para X", "novo pacote", "package XYZ from source/deb/AppImage/git" | `ebuild-creator` | `references/create.md` |
-| `bump`   | Subir versão de um ebuild existente (cópia da versão anterior, atualiza versão/commit/SRC_URI). Ex: "bump mesa to 26.0.5", "snapshot bump", "atualizar para nova versão" | `ebuild-bumper` | `references/bump.md` |
-| `edit`   | Modificação cirúrgica em ebuild que já existe, mantendo a mesma versão. Ex: "add USE flag", "fix dependencies", "adicionar patch", "fix build with gcc-15", "modificar src_install" | `ebuild-editor` | `references/edit.md` |
-| `qa`     | Validação read-only de ebuilds. Ex: "validar QA", "lint", "pkgcheck", "audit ebuild" | `qa-checker` | `references/qa.md` |
-| `clean`  | Manutenção do overlay como um todo: remover versões antigas, regenerar Manifests em batch, criar metadata.xml ausentes, news items (GLEP 42), `profiles/updates`, `package.mask`. Ex: "limpar overlay", "remover versões antigas", "fix overlay health", "criar news", "registrar pkgmove" | `overlay-maintainer` | `references/clean.md` |
-| `bootstrap` | Criar um overlay novo do zero (estrutura `profiles/repo_name`, `profiles/categories`, `metadata/layout.conf`). Ex: "criar overlay novo", "bootstrap overlay", "init repository" | `overlay-maintainer` | `references/bootstrap.md` |
+| Intent | When it applies | Sub-agent | Reference |
+|--------|-----------------|-----------|-----------|
+| `create` | A brand-new package that does not exist in the overlay yet. E.g. "create an ebuild for X", "new package", "package XYZ from source/deb/AppImage/git" | `ebuild-creator` | `references/create.md` |
+| `bump`   | Raise the version of an existing ebuild (copy the previous version, update version/commit/SRC_URI). E.g. "bump mesa to 26.0.5", "snapshot bump", "update to the new version" | `ebuild-bumper` | `references/bump.md` |
+| `edit`   | A surgical change to an ebuild that already exists, keeping the same version. E.g. "add USE flag", "fix dependencies", "add patch", "fix build with gcc-15", "modify src_install" | `ebuild-editor` | `references/edit.md` |
+| `qa`     | Read-only validation of ebuilds. E.g. "validate QA", "lint", "pkgcheck", "audit ebuild" | `qa-checker` | `references/qa.md` |
+| `clean`  | Overlay-wide maintenance: prune old versions, regenerate Manifests in batch, create missing metadata.xml, news items (GLEP 42), `profiles/updates`, `package.mask`. E.g. "clean the overlay", "remove old versions", "fix overlay health", "create news", "record pkgmove" | `overlay-maintainer` | `references/clean.md` |
+| `bootstrap` | Create a new overlay from scratch (`profiles/repo_name`, `profiles/categories`, `metadata/layout.conf`). E.g. "new overlay", "bootstrap overlay", "init repository" | `overlay-maintainer` | `references/bootstrap.md` |
 
-### Regras de desambiguação
+### Disambiguation rules
 
-Quando duas intenções podem se aplicar, **pergunte ao usuário antes de prosseguir**. Casos comuns:
+When two intents could apply, **ask the user before proceeding**. The common cases:
 
-- **"atualizar foo"** ou **"update foo"** → pode ser `bump` (subir versão) OU `edit` (corrigir um build na mesma versão). Pergunte: *"Atualizar para uma nova versão (bump) ou aplicar uma correção mantendo a versão atual (edit)?"*
-- **"criar nova versão"** → pode ser `create` (pacote inédito) OU `bump` (próxima versão de pacote existente). Verifique se o pacote já existe no overlay; se sim, é `bump`. Se ambíguo após checagem, pergunte.
-- **"fix overlay"** → pode ser `clean` (manutenção em batch) OU `qa` (audit read-only). Pergunte se o usuário quer apenas relatório (`qa`) ou aplicar correções (`clean`).
-- **Input vazio ou genérico** ("ajuda com ebuild", "trabalhar no overlay") → pergunte qual das 5 operações.
+- **"update foo"** → could be `bump` (raise the version) OR `edit` (fix a build at
+  the same version). Ask: *"Update to a new version (bump), or apply a fix while
+  keeping the current version (edit)?"*
+- **"create a new version"** → could be `create` (a package that does not exist)
+  OR `bump` (the next version of an existing one). Check whether the package is
+  already in the overlay; if it is, this is `bump`. Ask if it is still ambiguous
+  after that check.
+- **"fix overlay"** → could be `clean` (batch maintenance) OR `qa` (read-only
+  audit). Ask whether the user wants a report only (`qa`) or fixes applied (`clean`).
+- **Empty or generic input** ("help with an ebuild", "work on the overlay") → ask
+  which of the six operations they mean.
 
-Não invente argumentos faltando: se a intenção é clara mas faltam parâmetros (`<category/package>`, `<version>`, descrição da mudança), peça-os explicitamente.
+Never invent a missing argument: when the intent is clear but a parameter is
+absent (`<category/package>`, `<version>`, a description of the change), ask for
+it explicitly.
 
-## Step 2 — Carregue o reference
+## Step 2 — Load the reference
 
-Após classificar a intenção (e desambiguar se necessário), leia o arquivo correspondente com a tool `Read`:
+Once the intent is classified (and disambiguated if needed), read the matching
+file with the `Read` tool:
 
 - `${CLAUDE_PLUGIN_ROOT}/skills/bentoo/references/create.md`
 - `${CLAUDE_PLUGIN_ROOT}/skills/bentoo/references/bump.md`
@@ -87,23 +116,33 @@ Após classificar a intenção (e desambiguar se necessário), leia o arquivo co
 - `${CLAUDE_PLUGIN_ROOT}/skills/bentoo/references/clean.md`
 - `${CLAUDE_PLUGIN_ROOT}/skills/bentoo/references/bootstrap.md`
 
-O reference contém: detalhes operacionais, payload exato a passar ao sub-agent, e checks de pós-execução específicos da intenção.
+The reference carries the operational detail, the exact payload to hand the
+sub-agent, and the post-execution checks specific to that intent.
 
-## Step 3 — Delegue ao sub-agent
+## Step 3 — Delegate to the sub-agent
 
-Invoque o sub-agent listado no reference via tool `Agent` (subagent_type correspondente). Sempre passe:
+Invoke the sub-agent named in the reference through the `Agent` tool (matching
+`subagent_type`). Always pass:
 
-1. A instrução original do usuário (`$ARGUMENTS`)
-2. Profile content (carregado via overlay context acima)
-3. Itens adicionais especificados no reference
+1. The user's original instruction (`$ARGUMENTS`)
+2. The profile content (loaded via the overlay context above)
+3. Anything else the reference specifies
 
-## Step 4 — Pós-execução
+## Step 4 — Post-execution
 
-Após o sub-agent retornar, siga os checks listados no reference da intenção e apresente o resultado final ao usuário (paths absolutos, diff, contagens, status PASS/FAIL conforme aplicável).
+Once the sub-agent returns, follow the checks listed in that intent's reference
+and present the final result to the user: absolute paths, diff, counts, and a
+PASS/FAIL status where applicable.
 
-## Notas
+## Notes
 
-- Esta skill **roda inline** (não use `context: fork`) para poder pedir clarificação ao usuário quando a intenção for ambígua.
-- Os 5 sub-agents (`ebuild-creator`, `ebuild-bumper`, `ebuild-editor`, `qa-checker`, `overlay-maintainer`) já existem em `agents/` e fazem o trabalho real — esta skill apenas orquestra.
-- Para detalhes de gotchas críticos do Gentoo, os sub-agents preloadam a skill interna `gotchas` automaticamente; você não precisa carregá-la aqui.
-- Canonical Gentoo docs (PMS, devmanual, wiki, GLEPs) estão indexados em `${CLAUDE_PLUGIN_ROOT}/references/external-docs.md` — consulte sob demanda quando o conhecimento embarcado não bastar.
+- This skill **runs inline** (do not use `context: fork`) so it can ask the user
+  for clarification when the intent is ambiguous.
+- The five sub-agents (`ebuild-creator`, `ebuild-bumper`, `ebuild-editor`,
+  `qa-checker`, `overlay-maintainer`) already live in `agents/` and do the real
+  work — this skill only routes.
+- The critical Gentoo gotchas are preloaded into the sub-agents through the
+  internal `gotchas` skill; you do not need to load it here.
+- Canonical Gentoo docs (PMS, devmanual, wiki, GLEPs) are indexed in
+  `${CLAUDE_PLUGIN_ROOT}/references/external-docs.md` — consult it on demand when
+  the embedded knowledge is not enough.

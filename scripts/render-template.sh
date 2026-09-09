@@ -95,11 +95,15 @@ fi
 # Detect unresolved placeholders (informational, non-fatal unless strict).
 UNRESOLVED=$(printf '%s\n' "$CONTENT" | grep -ohE '@@[A-Z_]+@@' | sort -u || true)
 
+# A rendered file must end with a newline. Without one, pkgcheck reports
+# `NoFinalNewline: ebuild lacks an ending newline` on every generated ebuild,
+# and git renders the last line as "\ No newline at end of file".
+# `$(cat)` above strips trailing newlines, so add exactly one back.
 if [[ -n "$OUT" ]]; then
     mkdir -p "$(dirname -- "$OUT")"
-    printf '%s' "$CONTENT" > "$OUT"
+    printf '%s\n' "$CONTENT" > "$OUT"
 else
-    printf '%s' "$CONTENT"
+    printf '%s\n' "$CONTENT"
 fi
 
 if [[ -n "$UNRESOLVED" ]]; then

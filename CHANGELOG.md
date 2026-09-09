@@ -9,6 +9,145 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
+## [0.3.0] — 2026-09-09
+
+Context-budget and hook-correctness release. The skill now injects a bounded
+overlay summary instead of a verbatim dump, three silent hook defects are fixed,
+and the shipped `bentoo` profile is realigned with the overlay's own
+`CLAUDE.md`. All prose in the skill is now English.
+
+### Breaking
+
+- **`ebuild-creator` no longer runs under `isolation: worktree`.** It writes
+  directly into the target overlay. A worktree branches from the repository's
+  *default branch*, not the session HEAD, and never auto-merges — so the
+  generated ebuild landed in a throwaway checkout instead of the overlay.
+- **`overlay-maintainer` no longer declares `background: true`.** A background
+  subagent loses `AskUserQuestion`, which the `--all` destructive-scope
+  confirmation depended on. Confirmation moved to the inline router.
+- **`scripts/scheduled-pkgcheck.sh` was removed.** The `pkgcheck-watch` monitor
+  is the single pkgcheck path and absorbed its persistent log.
+- **`detect-overlay.sh` defaults to `--summary`.** It previously dumped
+  `metadata/layout.conf` and `profiles/package.mask` verbatim. Anything parsing
+  the old output — including via `bin/gentoo-overlay-detect` — must pass
+  `--full` to get it back.
+- **Missing `SLOT` or `LICENSE` is now an error, not a warning**, per PMS (SLOT
+  has no implicit default in EAPI 8). A pipeline treating `quick-lint.sh` as a
+  gate will start failing ebuilds that previously passed. `LICENSE` is exempt
+  for `virtual/*`, `acct-user/*` and `acct-group/*`, which install no files.
+
+### Added
+
+- Persistent `${CLAUDE_PLUGIN_DATA}/pkgcheck.log` written by the
+  `pkgcheck-watch` monitor; tune the interval with
+  `BENTOO_DEV_PKGCHECK_INTERVAL`.
+- `experimental.cacheTtl: 1h` on `ebuild-creator` and `overlay-maintainer`.
+- `scripts/overlay-context.sh` — serves the cached overlay summary to the skill,
+  with `--full` for the verbatim `layout.conf` + `package.mask` dump that only
+  the `clean` / `mask` intents need.
+- `scripts/lib/hook-common.sh` — shared hook payload/target resolution.
+- `quick-lint.sh --json` — batch report consumed by `qa-checker` so the seven
+  mechanical checks cost no tokens. Adds a copyright-year warning.
+- `egencache` handling: a bump step in `ebuild-bumper` and a `refresh-cache`
+  mode in `overlay-maintainer`, for overlays that keep a `metadata/md5-cache`.
+- `qa-checker` runs the overlay's own `check-*.sh` / `*-parity.sh` scripts when
+  present — they catch failures that pass `pkgcheck` and merge cleanly.
+- `bootstrap` eval and trigger-query coverage; seven hook evals for the
+  behaviours fixed here.
+
+### Changed
+
+- The overlay summary gained `profile-formats`, `eapis-banned`,
+  `eapis-deprecated` and the overlay's verification-script list;
+  `detect-overlay.sh` now reads `profiles/eapi`, which is authoritative over
+  `profile-eapi-when-unspecified`.
+- `assets/profiles/bentoo.md` rewritten from the overlay's `CLAUDE.md`: the
+  OpenRC-for-every-daemon rule, the inverted mask/unmask atom semantics under
+  `profile-repo-deps`, `~arm64` as the default rather than the exception,
+  `pkgdev manifest` requiring an explicit target, and the working rules
+  (checkout is not what Portage reads; no sudo; one worktree per session).
+- `bootstrap.md` no longer treats `profiles/categories` as mandatory.
+- **The plugin is entirely in English**, including the trigger phrases in
+  `when_to_use` and the fixtures in `evals/trigger-queries.json`. The
+  Portuguese match strings that earlier versions carried were replaced by
+  English ones of the same shape, not merely dropped, so trigger coverage is
+  unchanged in count (33 phrases, 48 fixture queries). One consequence worth
+  knowing: the skill no longer auto-triggers on a Portuguese instruction.
+  Combined `description` + `when_to_use` also fell from 1,413 to 906 of the
+  1,536-character budget, leaving room to add triggers later.
+- **All 19 hook commands use exec form (`"args": []`)** — spawned directly with
+  no shell, so a plugin path containing a space cannot break them. The reference
+  requires shell-form paths to be double-quoted, which none were. Monitor
+  commands remain shell-form and are now quoted.
+- Every hook declares a `statusMessage`.
+- README: overall version target corrected to **v2.1.259+**. It claimed
+  v2.1.119+ while its own table listed a v2.1.163 feature, and v2.1.259 fixed
+  `if:` conditions firing on unrelated Bash commands — six hooks depend on those.
+- README: the checkpointing caveat now covers both halves. Rewind tracks neither
+  Bash-modified files **nor subagent edits**, and every write in this plugin
+  happens inside a subagent, so `/rewind` is not a safety net for overlay work.
+- README: documented the eight-block `Stop` cap and
+  `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`.
+- README: every row of the minimum-version table verified against the upstream
+  CHANGELOG. Exec-form hooks were listed at v2.1.163 with no source; the real
+  entry is **v2.1.139**. `statusMessage` has no changelog entry and is now
+  listed with no version rather than a guessed one, and the three rows that
+  cannot be sourced (`bin/` auto-PATH, `displayName`, and the introduction of
+  `permissionDecision: "ask"`) are marked unverified. The header line still
+  claimed v2.1.119+ while the table said v2.1.259+; both now say v2.1.259+.
+- Router `effort` lowered from `high` to `medium` — it classifies and delegates;
+  the sub-agents declare their own.
+
+### Fixed
+
+Four defects below were found by building a package end to end — rendering it
+from the plugin's own templates, fetching a real distfile, and running
+`ebuild manifest clean unpack compile install` plus `pkgcheck`. None of them is
+visible to static review.
+
+- **Every generated file lacked a trailing newline.** `render-template.sh` wrote
+  with `printf '%s'`. `pkgcheck` reports `NoFinalNewline: ebuild lacks an ending
+  newline` on each one.
+- **`<stabilize-allarches/>` in the metadata.xml template raised a spurious QA
+  Notice on every build installing ELF files.** Portage greps `metadata.xml` for
+  the literal token without parsing XML
+  (`misc-functions.sh`), so commenting the example out did not hide it. The tag
+  is now described in prose and the literal token appears nowhere in the
+  template. Added as gotcha #11, since the `edit` path does not go through the
+  template.
+- **The metadata.xml template had inconsistent indentation**, reported by
+  `pkgcheck` as `PkgMetadataXmlIndentation`. Now tab-only.
+- **`render-template.sh --strict` could not render metadata.xml at all.** The
+  commented-out example blocks carried `@@…@@` placeholders, so a perfectly
+  valid file exited 2. The examples now use plain names.
+- `ebuild-creator` is told to delete an unused variable line rather than render
+  it as `IUSE=""`, which `pkgcheck` reports as `EmptyGlobalAssignment`.
+
+- **The six `PostToolUse` hooks matched on `Bash(cp|mv|sed)` were silent
+  no-ops.** They read `tool_input.file_path`, which a Bash payload never
+  carries. The `ebuild-bumper` flow — whose Step 2 is `cp old.ebuild
+  new.ebuild` — therefore ran with no lint and no Manifest reminder.
+- **`eapply_user` was checked with a file-wide grep**, so any
+  `--enable-default-foo` elsewhere in the ebuild satisfied it. Now scoped to the
+  `src_prepare()` body.
+- **`ebuild-creator-validate.sh` reported "validation passed" for zero packages
+  examined.** It now distinguishes blocked / passed / inconclusive, and searches
+  the subagent's cwd as well as the cached overlay root — `ebuild-creator`
+  declares `isolation: worktree`, so its files never land in the cached root.
+- `evals/*.json` referenced five skills removed in the v0.2.0 consolidation.
+- README undercounted the intents (five, not six) and the hook events (5, not
+  11), and its hooks table omitted `StopFailure` and `PreCompact`.
+
+### Performance
+
+| | Before | After |
+|---|---:|---:|
+| Context injected per skill invocation | 16,987 B | 1,387 B (−92%) |
+| `Stop` hook, per turn (375-ebuild overlay) | 992 ms | 174 ms (−82%) |
+
+Measured against `/var/db/repos/bentoo`. Stop-hook output verified identical to
+the previous implementation on the real overlay and on thick/thin fixtures.
+
 ## [0.2.0] — 2026-06-28
 
 Overlay-agnostic generalization, EAPI 9 support, and bug fixes. The plugin now

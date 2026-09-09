@@ -1,6 +1,6 @@
 # Reference: create
 
-Detalhes operacionais para a intenção `create` (criar ebuild novo) da skill `bentoo`.
+Operational detail for the `create` intent (author a new ebuild) of the `bentoo` skill.
 
 ## Sub-agent
 
@@ -8,7 +8,7 @@ Detalhes operacionais para a intenção `create` (criar ebuild novo) da skill `b
 
 ## Template selection
 
-Determine o tipo de pacote a partir da fonte upstream e selecione o template em `${CLAUDE_PLUGIN_ROOT}/assets/templates/`:
+Determine the package type from the upstream source and pick the template under `${CLAUDE_PLUGIN_ROOT}/assets/templates/`:
 
 | Upstream                       | Template                       |
 |--------------------------------|--------------------------------|
@@ -28,31 +28,32 @@ Determine o tipo de pacote a partir da fonte upstream e selecione o template em 
 | System user (acct-user)        | `acct-user.ebuild`             |
 | System group (acct-group)      | `acct-group.ebuild`            |
 
-Para EAPI 9 (overlays que o permitem), exporte `EAPI=9` antes de chamar
-`render-template.sh` — ver `references/eapi9-migration.md`.
+For EAPI 9 (on overlays that allow it), export `EAPI=9` before calling
+`render-template.sh` — see `references/eapi9-migration.md`.
 
 ## Payload to sub-agent
 
-Invoque `ebuild-creator` via tool `Agent` com:
+Invoke `ebuild-creator` through the `Agent` tool with:
 
-1. **Task**: criar ebuild para `<category/package>` versão `<version>`
-2. **Profile content**: o markdown do profile carregado pela skill
-3. **Template path**: caminho absoluto do template escolhido (o sub-agent usa este; não reescolhe)
-4. **User context**: o pedido original (`$ARGUMENTS`), URLs upstream, branch/tag, etc.
+1. **Task**: create an ebuild for `<category/package>` version `<version>`
+2. **Profile content**: the profile markdown loaded by the skill
+3. **Template path**: absolute path of the chosen template (the sub-agent uses this one; it does not re-pick)
+4. **User context**: the original request (`$ARGUMENTS`), upstream URLs, branch/tag, and so on
 
-> Os 10 gotchas já são preloaded no `ebuild-creator` via `skills: [bentoo-dev:gotchas]` — não passe `gotchas.md` no payload.
+> The 11 gotchas are already preloaded into `ebuild-creator` via
+> `skills: [bentoo-dev:gotchas]` — do not pass `gotchas.md` in the payload.
 
 ## Required arguments
 
-Antes de delegar, garanta que tem:
-- `<category/package>` (ex.: `dev-libs/foo`)
-- `<version>` (ex.: `1.2.3` ou `0_p20260427`)
-- Fonte upstream (URL, git repo, .deb path, AppImage path)
+Before delegating, make sure you have:
+- `<category/package>` (e.g. `dev-libs/foo`)
+- `<version>` (e.g. `1.2.3` or `0_p20260427`)
+- The upstream source (URL, git repo, .deb path, AppImage path)
 
-Se faltar qualquer um, pergunte ao usuário antes de delegar.
+If any is missing, ask the user before delegating.
 
 ## Post-action
 
-1. Confirme que `ebuild + metadata.xml + Manifest` foram criados.
-2. Apresente paths absolutos ao usuário para revisão final.
-3. Se `pkgcheck` estiver disponível, sugira rodar a intenção `qa` em seguida.
+1. Confirm that `ebuild + metadata.xml + Manifest` were all created.
+2. Present the absolute paths to the user for a final review.
+3. If `pkgcheck` is available, suggest running the `qa` intent next.

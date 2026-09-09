@@ -146,7 +146,7 @@ an "unknown eclass/category", check the master repos before flagging it.
 
 ## How to use this index from a sub-agent
 
-1. Try the embedded reference first (`gotchas.md` for the 10 critical rules; topical references for deeper material).
+1. Try the embedded reference first (`gotchas.md` for the 11 critical rules; topical references for deeper material).
 2. Fall back to this index when you need normative wording, less common eclass behaviour, or a policy citation.
 3. Prefer the **devmanual URL** when both wiki and devmanual cover the topic — devmanual is normative.
 4. Do not paste large excerpts back into ebuilds — link the URL in a code comment only when the rationale is genuinely non-obvious.

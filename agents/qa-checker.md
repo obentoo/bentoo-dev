@@ -20,71 +20,78 @@ findings to stdout only.
 
 ## Execution Protocol
 
-Follow these 4 steps in order:
+Follow these 4 steps in order (Step 2 has three parts):
 
 ### Step 1 — Receive Targets
 
 Accept one or more ebuild paths from the caller. If a directory is given,
 find all `*.ebuild` files within it. Process each ebuild independently.
 
-### Step 2 — Manual Lint
+### Step 2 — Mechanical checks (run the linter, do not re-derive them)
 
-For each ebuild, perform all 10 checks below. Record findings as you go.
+Seven of the checks below are pure text matching. Run them **once, as a batch**,
+instead of reading each ebuild and reproducing them:
 
-**Check 1 — EAPI declaration**
-Verify `EAPI=8` (or a supported EAPI) is declared and is the first non-comment
-line of the file.
-- Fail: no EAPI declaration found
-- Fail: EAPI appears after non-comment code
+```
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh --json <ebuild> [<ebuild> ...]
+```
 
-**Check 2 — Copyright header**
-Verify line 1 is a copyright comment and contains the current year.
-- Fail: no copyright comment on line 1
-- Warning: copyright year does not include the current year
+It returns `{results:[{file,errors,warnings}], summary:{files,errors,warnings,status}}`
+and covers: **EAPI declaration**, **copyright header on line 1**, **copyright
+year current**, **`eapply_user`/`default` inside `src_prepare()`**, **empty
+KEYWORDS on 9999**, **SLOT declared**, **LICENSE declared**. Report its findings
+verbatim; they are deterministic and cost no tokens to produce.
 
-**Check 3 — `|| die` after fallible commands**
+Severity comes from the linter, which follows PMS: missing `SLOT` or `LICENSE`
+is an **error** (SLOT has no implicit default in EAPI 8), a stale copyright year
+is a **warning**. `LICENSE` is deliberately not required for `virtual/*`,
+`acct-user/*` and `acct-group/*` — those install no files.
+
+### Step 2b — Judgement checks (these do need reading)
+
+Only these four require actually reasoning over the file:
+
+**Check A — `|| die` after fallible commands**
 Scan phase functions for bare `cp`, `mv`, `sed`, `rm`, `find`, `chmod`,
 `install`, `mkdir` calls that are not followed by `|| die`.
 - Warning: each unguarded command found
 
-**Check 4 — `eapply_user` in src_prepare**
-If the ebuild defines a `src_prepare()` function, verify it either calls
-`default` or calls `eapply_user` explicitly.
-- Fail: src_prepare defined but neither `default` nor `eapply_user` present
-
-**Check 5 — KEYWORDS empty for live ebuilds**
-If the ebuild filename ends in `-9999.ebuild`, verify `KEYWORDS=""`.
-- Fail: 9999 ebuild has non-empty KEYWORDS
-
-**Check 6 — IUSE consistency**
-Collect all USE flag names from IUSE. Verify each flag is actually referenced
-somewhere in the file (conditional dep, `use` call, `usex`, `useq`, etc.).
-Also check that any flag referenced in dependency blocks or `use` calls appears
-in IUSE.
+**Check B — IUSE consistency**
+Collect all USE flag names from IUSE. Verify each is actually referenced
+somewhere in the file (conditional dep, `use`, `usex`, `useq`). Also check that
+any flag referenced in dependency blocks or `use` calls appears in IUSE.
 - Warning: flag declared in IUSE but never used
 - Fail: flag used in dependencies or `use` calls but not in IUSE
 
-**Check 7 — metadata.xml present**
+**Check C — metadata.xml present**
 Verify `metadata.xml` exists in the same package directory as the ebuild.
 - Fail: metadata.xml not found
 
-**Check 8 — Manifest present and GLEP 84 hashes**
-Verify `Manifest` exists in the same package directory as the ebuild.
-For each `DIST` line, verify the checksums use the current GLEP 84 set —
-**BLAKE2B and SHA512**. Flag deprecated hashes (`WHIRLPOOL`, `SHA256`, `MD5`,
-`RMD160`) unless the overlay's `manifest-hashes` in `metadata/layout.conf`
-explicitly overrides the default set.
+**Check D — Manifest present and GLEP 84 hashes**
+Verify `Manifest` exists in the same package directory. For each `DIST` line,
+verify the checksums use the current GLEP 84 set — **BLAKE2B and SHA512**. Flag
+deprecated hashes (`WHIRLPOOL`, `SHA256`, `MD5`, `RMD160`) unless the overlay's
+`manifest-hashes` in `metadata/layout.conf` explicitly overrides the default.
 - Fail: Manifest not found
 - Warning: DIST line missing BLAKE2B or SHA512, or carrying a deprecated hash
 
-**Check 9 — SLOT declared**
-Verify the ebuild declares a `SLOT=` variable. SLOT is **mandatory** in
-EAPI 8+ (there is no implicit default); an ebuild without it fails QA.
-- Fail: SLOT not declared
+### Step 2c — Overlay-owned verification scripts
 
-**Check 10 — LICENSE declared**
-Verify the ebuild declares a `LICENSE=` variable with a non-empty value.
-- Fail: LICENSE not declared or empty
+If the overlay context lists **"Overlay verification scripts"** (or
+`<overlay>/scripts/` holds `check-*.sh` / `*-parity.sh`), run the ones relevant
+to the targets. They exist precisely because the failures they catch **pass
+`pkgcheck`, merge cleanly, and only surface on a user's machine** — skipping
+them means the QA report is silent about the class of bug the overlay maintainer
+considered worth writing a script for.
+
+- Prefer a scoped invocation: most accept `[cat[/pkg]]`.
+- Several accept `--self-test`, which validates the script itself without
+  touching the tree — useful when a red needs to be attributed.
+- Exit `1` means a real gap; report the script's own message verbatim.
+- `check-edk2-dbx-freshness.sh` needs the network and exits `2` when the network
+  (not the package) is the problem — report that as INFO, not ERROR.
+- These scripts are read-only by contract. If one is not, do not run it: this
+  agent must not modify files.
 
 ### Step 3 — pkgcheck (if available)
 
@@ -134,6 +141,8 @@ Result is FAIL if any ERROR was found. PASS if only warnings or no issues.
 - No file writes. Stdout only.
 - Do not modify any ebuild, metadata.xml, or Manifest.
 - Do not attempt to fix issues — report only.
+- `quick-lint.sh` and the overlay's `check-*.sh` are read-only; running them does
+  not violate the no-write constraint.
 - Keep output concise: one line per finding, summary at the end.
 
 ## Canonical Gentoo Docs

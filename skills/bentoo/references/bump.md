@@ -1,6 +1,6 @@
 # Reference: bump
 
-Detalhes operacionais para a intenção `bump` (atualização de versão de ebuild existente) da skill `bentoo`.
+Operational detail for the `bump` intent (version update of an existing ebuild) of the `bentoo` skill.
 
 ## Sub-agent
 
@@ -8,32 +8,37 @@ Detalhes operacionais para a intenção `bump` (atualização de versão de ebui
 
 ## Bump mode detection
 
-- **Standard bump**: `<pkg>-<old>` → `<pkg>-<new>` (versão semver normal)
-- **Snapshot bump**: `<pkg>-<base>_p<YYYYMMDD>` (atualiza `GIT_COMMIT` + data)
-- **Live ebuild**: `9999.ebuild` — geralmente não precisa de bump explícito; sinalize ao usuário se for este o caso.
+- **Standard bump**: `<pkg>-<old>` → `<pkg>-<new>` (ordinary semver-style version)
+- **Snapshot bump**: `<pkg>-<base>_p<YYYYMMDD>` (updates `GIT_COMMIT` + the date)
+- **Live ebuild**: `9999.ebuild` — usually needs no explicit bump; tell the user when this is the case.
 
 ## Payload to sub-agent
 
-Invoque `ebuild-bumper` via tool `Agent` com:
+Invoke `ebuild-bumper` through the `Agent` tool with:
 
-1. **Task**: bump `<category/package>` para a versão `<new-version>`
-2. **Mode**: `standard` | `snapshot` (detectar pelo formato `_p<YYYYMMDD>` em `<new-version>`)
-3. **New commit hash** (snapshot apenas — peça ao usuário se não foi fornecido)
-4. **Profile content**: o markdown do profile carregado pela skill
-5. **Old ebuild path**: caminho absoluto do ebuild da versão anterior (a versão mais alta encontrada via `Glob` no diretório do pacote)
+1. **Task**: bump `<category/package>` to version `<new-version>`
+2. **Mode**: `standard` | `snapshot` (detect from the `_p<YYYYMMDD>` shape in `<new-version>`)
+3. **New commit hash** (snapshot only — ask the user if it was not supplied)
+4. **Profile content**: the profile markdown loaded by the skill
+5. **Old ebuild path**: absolute path of the previous version's ebuild (the highest version found with `Glob` in the package directory)
 6. **Remove old version?**: `yes` / `no` (default: `no`)
 
 ## Required arguments
 
-Antes de delegar, garanta que tem:
-- `<category/package>` (existente no overlay)
+Before delegating, make sure you have:
+- `<category/package>` (already present in the overlay)
 - `<new-version>`
-- Para snapshot bumps: `<commit-hash>` + data `YYYYMMDD`
+- For snapshot bumps: `<commit-hash>` + the `YYYYMMDD` date
 
-Se o pacote não existe, confirme com o usuário se é caso de `create` em vez de `bump`.
+If the package does not exist, confirm with the user whether this is a `create` rather than a `bump`.
 
 ## Post-action
 
-1. Confirmar novo ebuild válido + Manifest regenerado.
-2. Reportar: `old → new`, files created/removed, mudanças não-óbvias (`S=`, `GIT_COMMIT`, `MY_P`, `MY_PV`).
-3. Se `pkgcheck` estiver disponível, sugira rodar a intenção `qa` em seguida.
+1. Confirm the new ebuild is valid and the Manifest was regenerated.
+1b. If the overlay carries `metadata/md5-cache/`, confirm the package's cache was
+   regenerated with `egencache ... --repo <repo> <cat>/<pkg>` (explicit target).
+   Without it the previous version's entry is orphaned and the litter grows with
+   every bump.
+2. Report: `old → new`, files created/removed, and any non-obvious change
+   (`S=`, `GIT_COMMIT`, `MY_P`, `MY_PV`).
+3. If `pkgcheck` is available, suggest running the `qa` intent next.

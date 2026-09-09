@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Wrapper exposing scripts/quick-lint.sh on PATH when the plugin is enabled.
-# Accepts an .ebuild path as its only argument.
+#
+# Usage: gentoo-ebuild-lint [--json] <ebuild> [<ebuild> ...]
+#   --json  machine-readable batch report (requires jq)
+# Always exits 0; the findings are the output.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 exec bash "$SCRIPT_DIR/scripts/quick-lint.sh" "$@"

@@ -2,12 +2,16 @@
 # SessionStart / CwdChanged hook: detects the active overlay once per session
 # (or on cwd change) and caches the result under ${CLAUDE_PLUGIN_DATA}/overlay.json.
 #
-# Skills can read this cache instead of re-running detect-overlay.sh on every
-# turn (which spawns subshells and re-reads metadata/layout.conf).
+# The cache carries both structured fields (consumed by monitor-pkgcheck.sh,
+# ebuild-creator-validate.sh, manifest-stale-check.sh) and the rendered
+# `summary` text, so the `bentoo` skill can inject overlay context from the
+# cache instead of re-running detect-overlay.sh on every invocation.
 #
 # Output: exit 0 + optional hookSpecificOutput.additionalContext announcing
 # the detected overlay name, so Claude is aware without re-reading the file.
 set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 PAYLOAD=""
 [[ -t 0 ]] || PAYLOAD="$(cat)"
@@ -33,6 +37,7 @@ OVERLAY_NAME=""
 THIN_MANIFESTS="false"
 MASTERS=""
 MANIFEST_HASHES=""
+PROFILE_EAPI=""
 
 # Extract a single layout.conf value (first match), trimming whitespace.
 layout_value() {
@@ -54,6 +59,7 @@ while [[ "$DIR" != "/" ]]; do
         fi
         MASTERS=$(layout_value masters "$DIR/metadata/layout.conf")
         MANIFEST_HASHES=$(layout_value manifest-hashes "$DIR/metadata/layout.conf")
+        [[ -f "$DIR/profiles/eapi" ]] && PROFILE_EAPI=$(tr -d '[:space:]' < "$DIR/profiles/eapi")
         break
     fi
     DIR=$(dirname -- "$DIR")
@@ -70,6 +76,9 @@ if [[ -n "${PAYLOAD}" ]] && command -v jq >/dev/null 2>&1; then
     EVENT=$(printf '%s' "$PAYLOAD" | jq -r '.hook_event_name // "SessionStart"')
 fi
 
+# Render the bounded summary once, here, so the skill never has to.
+SUMMARY=$(bash "$HERE/detect-overlay.sh" --summary "$OVERLAY_ROOT" 2>/dev/null || true)
+
 if command -v jq >/dev/null 2>&1; then
     jq -n \
         --arg root "$OVERLAY_ROOT" \
@@ -77,8 +86,12 @@ if command -v jq >/dev/null 2>&1; then
         --arg thin "$THIN_MANIFESTS" \
         --arg masters "$MASTERS" \
         --arg hashes "$MANIFEST_HASHES" \
+        --arg peapi "$PROFILE_EAPI" \
         --arg cwd "$CWD" \
-        '{root:$root, name:$name, thin_manifests:($thin=="true"), masters:$masters, manifest_hashes:$hashes, detected_at:now, cwd:$cwd}' \
+        --arg summary "$SUMMARY" \
+        '{root:$root, name:$name, thin_manifests:($thin=="true"), masters:$masters,
+          manifest_hashes:$hashes, profile_eapi:$peapi, detected_at:now,
+          cwd:$cwd, summary:$summary}' \
         > "$CACHE"
 
     MSG="[bentoo-dev] Overlay detected: ${OVERLAY_NAME} at ${OVERLAY_ROOT} (thin-manifests=${THIN_MANIFESTS})"
