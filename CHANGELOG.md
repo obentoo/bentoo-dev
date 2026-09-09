@@ -100,6 +100,29 @@ and the shipped `bentoo` profile is realigned with the overlay's own
 
 ### Fixed
 
+Four defects below were found by building a package end to end — rendering it
+from the plugin's own templates, fetching a real distfile, and running
+`ebuild manifest clean unpack compile install` plus `pkgcheck`. None of them is
+visible to static review.
+
+- **Every generated file lacked a trailing newline.** `render-template.sh` wrote
+  with `printf '%s'`. `pkgcheck` reports `NoFinalNewline: ebuild lacks an ending
+  newline` on each one.
+- **`<stabilize-allarches/>` in the metadata.xml template raised a spurious QA
+  Notice on every build installing ELF files.** Portage greps `metadata.xml` for
+  the literal token without parsing XML
+  (`misc-functions.sh`), so commenting the example out did not hide it. The tag
+  is now described in prose and the literal token appears nowhere in the
+  template. Added as gotcha #11, since the `edit` path does not go through the
+  template.
+- **The metadata.xml template had inconsistent indentation**, reported by
+  `pkgcheck` as `PkgMetadataXmlIndentation`. Now tab-only.
+- **`render-template.sh --strict` could not render metadata.xml at all.** The
+  commented-out example blocks carried `@@…@@` placeholders, so a perfectly
+  valid file exited 2. The examples now use plain names.
+- `ebuild-creator` is told to delete an unused variable line rather than render
+  it as `IUSE=""`, which `pkgcheck` reports as `EmptyGlobalAssignment`.
+
 - **The six `PostToolUse` hooks matched on `Bash(cp|mv|sed)` were silent
   no-ops.** They read `tool_input.file_path`, which a Bash payload never
   carries. The `ebuild-bumper` flow — whose Step 2 is `cp old.ebuild

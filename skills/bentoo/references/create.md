@@ -40,7 +40,7 @@ Invoke `ebuild-creator` through the `Agent` tool with:
 3. **Template path**: absolute path of the chosen template (the sub-agent uses this one; it does not re-pick)
 4. **User context**: the original request (`$ARGUMENTS`), upstream URLs, branch/tag, and so on
 
-> The 10 gotchas are already preloaded into `ebuild-creator` via
+> The 11 gotchas are already preloaded into `ebuild-creator` via
 > `skills: [bentoo-dev:gotchas]` — do not pass `gotchas.md` in the payload.
 
 ## Required arguments

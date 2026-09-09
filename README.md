@@ -303,7 +303,7 @@ run in a fresh clone with no access to your local overlay. Use a
 
 ## Critical gotchas (reference)
 
-The 10 must-know rules are centralised in `references/gotchas.md` and exposed
+The 11 must-know rules are centralised in `references/gotchas.md` and exposed
 to sub-agents via the `bentoo-dev:gotchas` skill (preloaded via `skills:`
 frontmatter, with `user-invocable: false`):
 
@@ -317,6 +317,7 @@ frontmatter, with `user-invocable: false`):
 8. `thin-manifests` only contains DIST entries
 9. `default` in `src_prepare` applies `PATCHES` + `eapply_user`
 10. `MY_P` / `MY_PN` for upstream naming mismatches
+11. `<stabilize-allarches/>` is grepped, not parsed — never write the literal token in `metadata.xml`, not even in a comment
 
 ### Overlay bookkeeping the agents enforce
 

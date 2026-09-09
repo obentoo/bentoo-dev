@@ -3,36 +3,46 @@
 <pkgmetadata>
 	<maintainer type="@@MAINTAINER_TYPE@@">
 		<email>@@MAINTAINER_EMAIL@@</email>
-		<!-- <name> is optional (GLEP 68). The renderer drops this line when
-		     MAINTAINER_NAME is unset; an empty placeholder would be invalid. -->
+		<!-- <name> is optional per GLEP 68. render-template.sh drops the
+		next line when MAINTAINER_NAME is unset, because an unresolved
+		placeholder would be invalid against the DTD. -->
 		<name>@@MAINTAINER_NAME@@</name>
 	</maintainer>
-	<!-- Uncomment and add USE flag descriptions if IUSE is non-empty
+	<!-- Uncomment and describe every flag in IUSE. Delete the block if
+	IUSE is empty. -->
+	<!--
 	<use>
-		<flag name="@@FLAG@@">@@FLAG_DESCRIPTION@@</flag>
+		<flag name="FLAG_NAME">What enabling this flag does.</flag>
 	</use>
 	-->
-	<!-- Uncomment to mark a package that may be stabilized on all arches at once
-	<stabilize-allarches/>
-	-->
-	<!-- Uncomment and set upstream tracking if applicable (GLEP 68 §3).
-	     Valid remote-id types include: github, gitlab, codeberg, bitbucket,
-	     sourceforge, savannah, pypi, cpan, rubygems, hackage, gentoo,
-	     freedesktop-gitlab, kde-invent, sourcehut, launchpad.
+	<!-- For a package that may be stabilized on all arches at once, add a
+	self-closing stabilize-allarches element here.
+
+	The literal tag is deliberately not written anywhere in this file, not even
+	inside a comment: Portage greps metadata.xml for it without parsing XML
+	(misc-functions.sh), so a commented-out example still raises a QA Notice on
+	every build that installs ELF files. Only add it for a package that installs
+	no ELF files. -->
+	<!-- Uncomment and fill in upstream tracking per GLEP 68 section 3.
+	Valid remote-id types include: github, gitlab, codeberg, bitbucket,
+	sourceforge, savannah, pypi, cpan, rubygems, hackage, gentoo,
+	freedesktop-gitlab, kde-invent, sourcehut, launchpad. -->
+	<!--
 	<upstream>
-		<remote-id type="github">@@OWNER@@/@@REPO@@</remote-id>
-		<bugs-to>@@BUGS_TO@@</bugs-to>
-		<doc>@@DOC_URL@@</doc>
-		<changelog>@@CHANGELOG_URL@@</changelog>
+		<remote-id type="github">OWNER/REPO</remote-id>
+		<bugs-to>https://github.com/OWNER/REPO/issues</bugs-to>
+		<doc>https://example.org/docs</doc>
+		<changelog>https://example.org/NEWS</changelog>
 		<maintainer status="active">
-			<email>@@UPSTREAM_EMAIL@@</email>
-			<name>@@UPSTREAM_NAME@@</name>
+			<email>upstream@example.org</email>
+			<name>Upstream Author</name>
 		</maintainer>
 	</upstream>
 	-->
-	<!-- Uncomment for a longer description than DESCRIPTION allows
+	<!-- Uncomment for a longer description than DESCRIPTION allows. -->
+	<!--
 	<longdescription lang="en">
-		@@LONGDESCRIPTION@@
+		One or two paragraphs on what the package actually does.
 	</longdescription>
 	-->
 </pkgmetadata>

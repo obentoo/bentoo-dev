@@ -55,7 +55,13 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/render-template.sh \
 ```
 
 Then fill in any remaining package-specific bits (DEPEND/RDEPEND/BDEPEND,
-phase function tweaks). For a live (9999) ebuild, leave KEYWORDS unset
+phase function tweaks).
+
+**Delete a variable line rather than leaving it empty.** The templates ship
+`IUSE="@@IUSE@@"`, `DEPEND="@@DEPEND@@"` and friends as slots to fill; a package
+with no USE flags and no dependencies wants those lines *gone*, not rendered as
+`IUSE=""`. pkgcheck reports each one as `EmptyGlobalAssignment`. Remove the
+surrounding blank line too, or you trade that warning for `DoubleEmptyLine`. For a live (9999) ebuild, leave KEYWORDS unset
 (omit the line entirely) — the live/snapshot template only keywords the
 non-9999 branch via `@@KEYWORDS@@`.
 
@@ -104,7 +110,7 @@ Load these references only when the specific situation applies — do not load a
 
 ## Critical Gotchas
 
-The 10 gotchas (eapply_user, `|| die`, KEYWORDS for 9999, `S=` matching, SRC_URI rename, QA_PREBUILT/RESTRICT, header ordering, thin-manifests, `default` in `src_prepare`, MY_P/MY_PN) are preloaded via the `bentoo-dev:gotchas` skill declared in this agent's frontmatter. Apply them when generating the ebuild — do not duplicate or paraphrase. If the skill content is missing from context (e.g., after auto-compact), re-read `${CLAUDE_PLUGIN_ROOT}/references/gotchas.md`.
+The 11 gotchas (eapply_user, `|| die`, KEYWORDS for 9999, `S=` matching, SRC_URI rename, QA_PREBUILT/RESTRICT, header ordering, thin-manifests, `default` in `src_prepare`, MY_P/MY_PN, `<stabilize-allarches/>` grep) are preloaded via the `bentoo-dev:gotchas` skill declared in this agent's frontmatter. Apply them when generating the ebuild — do not duplicate or paraphrase. If the skill content is missing from context (e.g., after auto-compact), re-read `${CLAUDE_PLUGIN_ROOT}/references/gotchas.md`.
 
 ## Canonical Gentoo Docs
 

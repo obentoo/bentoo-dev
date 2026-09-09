@@ -296,3 +296,38 @@ S="${WORKDIR}/${MY_P}"
 EGIT_COMMIT="afe9eb980aa928a66d1c9c06f38c55dd59868720"
 S="${WORKDIR}/${MY_PN}-${EGIT_COMMIT}"
 ```
+
+---
+
+## 11. `<stabilize-allarches/>` in metadata.xml, even commented out
+
+**Rule**: Never write the literal `<stabilize-allarches/>` token in a
+`metadata.xml` unless the package genuinely installs no ELF files — not in a
+comment, not as an example, not in explanatory prose.
+
+**Why it matters**: Portage does not parse the XML for this check. It greps:
+
+```bash
+# /usr/lib/portage/python3.14/misc-functions.sh
+if grep -qs '<stabilize-allarches/>' "${EBUILD%/*}/metadata.xml"; then
+        eqawarn "QA Notice: <stabilize-allarches/> found on package installing ELF files"
+fi
+```
+
+A comment-blind `grep` means an XML comment does not hide it. The element is
+invisible to every real parser and still fires the warning, so the file looks
+correct while every build of a compiled package emits a spurious QA Notice.
+
+```xml
+<!-- WRONG — fires the notice on every build that installs an ELF file -->
+<!--
+<stabilize-allarches/>
+-->
+
+<!-- RIGHT — name the element in prose, never as the literal token -->
+<!-- For an arch-independent package, add a self-closing
+stabilize-allarches element here. -->
+```
+
+This one only surfaces at install time, which is exactly what the plugin's
+`portage-elog` monitor watches for. `pkgcheck` does not catch it.
