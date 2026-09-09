@@ -18,6 +18,15 @@ and the shipped `bentoo` profile is realigned with the overlay's own
 
 ### Breaking
 
+- **`ebuild-creator` no longer runs under `isolation: worktree`.** It writes
+  directly into the target overlay. A worktree branches from the repository's
+  *default branch*, not the session HEAD, and never auto-merges — so the
+  generated ebuild landed in a throwaway checkout instead of the overlay.
+- **`overlay-maintainer` no longer declares `background: true`.** A background
+  subagent loses `AskUserQuestion`, which the `--all` destructive-scope
+  confirmation depended on. Confirmation moved to the inline router.
+- **`scripts/scheduled-pkgcheck.sh` was removed.** The `pkgcheck-watch` monitor
+  is the single pkgcheck path and absorbed its persistent log.
 - **`detect-overlay.sh` defaults to `--summary`.** It previously dumped
   `metadata/layout.conf` and `profiles/package.mask` verbatim. Anything parsing
   the old output — including via `bin/gentoo-overlay-detect` — must pass
@@ -29,6 +38,10 @@ and the shipped `bentoo` profile is realigned with the overlay's own
 
 ### Added
 
+- Persistent `${CLAUDE_PLUGIN_DATA}/pkgcheck.log` written by the
+  `pkgcheck-watch` monitor; tune the interval with
+  `BENTOO_DEV_PKGCHECK_INTERVAL`.
+- `experimental.cacheTtl: 1h` on `ebuild-creator` and `overlay-maintainer`.
 - `scripts/overlay-context.sh` — serves the cached overlay summary to the skill,
   with `--full` for the verbatim `layout.conf` + `package.mask` dump that only
   the `clean` / `mask` intents need.
@@ -57,6 +70,19 @@ and the shipped `bentoo` profile is realigned with the overlay's own
 - The `bentoo` skill and its six intent references are in English. Portuguese
   trigger phrases are retained as match strings, labelled `PT triggers:`, with
   English equivalents added where they were missing.
+- **All 19 hook commands use exec form (`"args": []`)** — spawned directly with
+  no shell, so a plugin path containing a space cannot break them. The reference
+  requires shell-form paths to be double-quoted, which none were. Monitor
+  commands remain shell-form and are now quoted.
+- Every hook declares a `statusMessage`.
+- README: overall version target corrected to **v2.1.259+**. It claimed
+  v2.1.119+ while its own table listed a v2.1.163 feature, and v2.1.259 fixed
+  `if:` conditions firing on unrelated Bash commands — six hooks depend on those.
+- README: the checkpointing caveat now covers both halves. Rewind tracks neither
+  Bash-modified files **nor subagent edits**, and every write in this plugin
+  happens inside a subagent, so `/rewind` is not a safety net for overlay work.
+- README: documented the eight-block `Stop` cap and
+  `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`.
 - Router `effort` lowered from `high` to `medium` — it classifies and delegates;
   the sub-agents declare their own.
 
