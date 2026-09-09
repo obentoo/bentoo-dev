@@ -1,25 +1,25 @@
 # Reference: bootstrap
 
-Detalhes operacionais para a intenção `bootstrap` (criar um overlay Gentoo novo do zero) da skill `bentoo`.
+Operational detail for the `bootstrap` intent (create a new Gentoo overlay from scratch) of the `bentoo` skill.
 
 ## Sub-agent
 
 `overlay-maintainer`
 
-## O que um overlay mínimo precisa
+## What a minimal overlay needs
 
 ```
 <overlay>/
 ├── metadata/
 │   └── layout.conf          # masters, thin-manifests, manifest-hashes, sign-manifests
 ├── profiles/
-│   ├── repo_name            # nome único do repositório (uma linha)
-│   ├── categories           # uma categoria por linha (ex.: dev-libs)
-│   └── eapi                 # opcional: EAPI default dos profiles (ex.: 8)
-└── <category>/<package>/    # ebuilds vêm depois (intenção `create`)
+│   ├── repo_name            # unique repository name (single line) — mandatory
+│   ├── categories           # optional: only for NEW categories (not inherited ones)
+│   └── eapi                 # optional: default EAPI for the profiles (e.g. 8)
+└── <category>/<package>/    # ebuilds come later (the `create` intent)
 ```
 
-### `metadata/layout.conf` recomendado
+### Recommended `metadata/layout.conf`
 
 ```
 masters = gentoo
@@ -30,43 +30,47 @@ manifest-required-hashes = BLAKE2B SHA512
 cache-formats = md5-dict
 ```
 
-- `masters` lista os repos herdados (no mínimo `gentoo`; some overlays mastram outros, ex. `gentoo guru`).
-- `thin-manifests = true` é o padrão moderno para overlays (Manifest só com entradas DIST).
-- `manifest-hashes` segue GLEP 84 (BLAKE2B + SHA512).
+- `masters` lists the inherited repos (at least `gentoo`; some overlays master others, e.g. `gentoo guru`).
+- `thin-manifests = true` is the modern default for an overlay (the Manifest carries DIST entries only).
+- `manifest-hashes` follows GLEP 84 (BLAKE2B + SHA512).
 
 ### `profiles/repo_name`
 
-Uma linha com o nome do repositório (sem espaços), ex.: `myoverlay`. Deve ser único.
+A single line holding the repository name, with no spaces — e.g. `myoverlay`. It must be unique.
 
 ### `profiles/categories`
 
-Uma categoria por linha. Só liste categorias que o overlay realmente usa.
+**Optional.** It is only needed for categories the overlay *introduces*; those
+that already exist in a master (`gentoo`) are inherited. The `bentoo` overlay
+itself, with 54 categories in use, does not have this file. Create it only when
+there is a genuinely new category — a file listing inherited categories adds
+nothing and becomes one more thing that can drift.
 
 ## Payload to sub-agent
 
-Invoque `overlay-maintainer` via tool `Agent` com:
+Invoke `overlay-maintainer` through the `Agent` tool with:
 
 1. **Task**: `bootstrap`
-2. **Overlay path**: diretório raiz onde criar a estrutura (confirme que está vazio ou não é já um overlay)
-3. **Repo name**: nome desejado (`profiles/repo_name`)
-4. **Masters**: lista de masters (default `gentoo`)
-5. **Manifest mode**: `thin` (default) ou `thick`
-6. **Profile content**: o markdown do profile carregado pela skill
+2. **Overlay path**: root directory to create the structure in (confirm it is empty, or at least not already an overlay)
+3. **Repo name**: the desired name (`profiles/repo_name`)
+4. **Masters**: the masters list (default `gentoo`)
+5. **Manifest mode**: `thin` (default) or `thick`
+6. **Profile content**: the profile markdown loaded by the skill
 
 ## Required arguments
 
-- Caminho do overlay novo
-- Nome do repositório
+- Path of the new overlay
+- Repository name
 
-Se faltarem, pergunte ao usuário antes de delegar. Confirme que o caminho não contém já um `metadata/layout.conf` (não sobrescreva um overlay existente).
+If either is missing, ask the user before delegating. Confirm the path does not already hold a `metadata/layout.conf` — never overwrite an existing overlay.
 
 ## Post-action
 
-1. Listar os arquivos criados (paths absolutos).
-2. Sugerir registrar o overlay localmente com `eselect repository` ou um `repos.conf` entry.
-3. Sugerir a intenção `create` para adicionar o primeiro pacote.
+1. List every file created (absolute paths).
+2. Suggest registering the overlay locally with `eselect repository` or a `repos.conf` entry.
+3. Suggest the `create` intent to add the first package.
 
-## Referências canônicas
+## Canonical references
 
 - https://wiki.gentoo.org/wiki/Creating_an_ebuild_repository
 - https://wiki.gentoo.org/wiki/Repository_format/metadata/layout.conf

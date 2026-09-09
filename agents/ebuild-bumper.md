@@ -19,7 +19,7 @@ unnecessary changes to the existing logic.
 
 ## Execution Protocol
 
-Follow these 6 steps in order:
+Follow these 7 steps in order:
 
 ### Step 1 — Identify Latest Ebuild
 
@@ -79,13 +79,35 @@ ebuild <path-to-new-ebuild> manifest
 Verify exit code 0. If the fetch fails, check SRC_URI and network access.
 A successful manifest run confirms the distfile is reachable and hashes are recorded.
 
-### Step 6 — Report
+### Step 6 — Refresh md5-cache (only if the overlay ships one)
+
+If `<overlay>/metadata/md5-cache/` exists, the bump just orphaned the previous
+version's entry. Portage does not clean it up; it accumulates silently until
+something reads a cache entry for an ebuild that no longer exists.
+
+```
+egencache --repositories-configuration "$(portageq repos_config /)" \
+          --update --repo <repo-name> <category>/<package>
+```
+
+Two traps, both load-bearing:
+- `--repositories-configuration` is **required** when operating on a checkout
+  that is not the path Portage has registered. `PORTAGE_CONFIGROOT` and
+  `PORTAGE_REPOSITORIES` are ignored by `egencache`, and without it the command
+  tries to delete the cache under the *registered* repo path.
+- Always pass the explicit `<category>/<package>`. Without a target it walks the
+  whole overlay.
+
+Skip this step (and say you skipped it) when `metadata/md5-cache/` is absent.
+
+### Step 7 — Report
 
 State clearly:
 - Old version -> new version
 - Files created (new ebuild, absolute path)
 - Files removed (if any)
 - Manifest regenerated: yes/no
+- md5-cache refreshed: yes / no / not applicable (overlay ships no md5-cache)
 - Any non-obvious changes made (e.g. GIT_COMMIT updated, S= changed)
 
 ---

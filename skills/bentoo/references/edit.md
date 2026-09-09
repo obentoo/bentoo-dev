@@ -1,6 +1,6 @@
 # Reference: edit
 
-Detalhes operacionais para a intenção `edit` (modificação cirúrgica em ebuild existente) da skill `bentoo`.
+Operational detail for the `edit` intent (surgical change to an existing ebuild) of the `bentoo` skill.
 
 ## Sub-agent
 
@@ -8,27 +8,27 @@ Detalhes operacionais para a intenção `edit` (modificação cirúrgica em ebui
 
 ## Payload to sub-agent
 
-Invoque `ebuild-editor` via tool `Agent` com:
+Invoke `ebuild-editor` through the `Agent` tool with:
 
-1. **Task**: descrição precisa da mudança (`add USE flag X`, `add patch Y`, `fix dep Z`, `bump dep min version`, `add src_install hook`, etc.)
-2. **Target ebuild**: path absoluto do ebuild a modificar
-3. **Profile content**: o markdown do profile carregado pela skill
-4. **Reference loading hints**: aponte qual reference do plugin o sub-agent deve consultar:
-   - `${CLAUDE_PLUGIN_ROOT}/references/eclass-guide.md` → escolha/troca de eclass
-   - `${CLAUDE_PLUGIN_ROOT}/references/dependency-syntax.md` → blocos USE-conditional, REQUIRED_USE, slot deps
+1. **Task**: a precise description of the change (`add USE flag X`, `add patch Y`, `fix dep Z`, `bump dep min version`, `add src_install hook`, and so on)
+2. **Target ebuild**: absolute path of the ebuild to modify
+3. **Profile content**: the profile markdown loaded by the skill
+4. **Reference loading hints**: point the sub-agent at the plugin reference it should consult:
+   - `${CLAUDE_PLUGIN_ROOT}/references/eclass-guide.md` → choosing or switching an eclass
+   - `${CLAUDE_PLUGIN_ROOT}/references/dependency-syntax.md` → USE-conditional blocks, REQUIRED_USE, slot deps
    - `${CLAUDE_PLUGIN_ROOT}/references/language-ecosystems.md` → Go/Rust/Java/Python/Ruby/Perl/Electron
 
 ## Required arguments
 
-Antes de delegar, garanta que tem:
-- `<target ebuild>` (path ou `<category/package>`)
-- Descrição clara da mudança
+Before delegating, make sure you have:
+- `<target ebuild>` (a path or `<category/package>`)
+- A clear description of the change
 
-Se a mudança envolve um arquivo de patch, confirme path/conteúdo do patch antes de delegar.
+If the change involves a patch file, confirm the patch's path and content before delegating.
 
 ## Post-action
 
-1. Verificar consistência cross-file: IUSE ↔ deps ↔ metadata.xml ↔ phase functions.
-2. Se `SRC_URI` mudou → confirmar Manifest regenerado.
-3. Apresentar diff resumido ao usuário.
-4. Se `pkgcheck` estiver disponível, sugira rodar a intenção `qa` em seguida.
+1. Verify cross-file consistency: IUSE ↔ deps ↔ metadata.xml ↔ phase functions.
+2. If `SRC_URI` changed → confirm the Manifest was regenerated.
+3. Present a summarised diff to the user.
+4. If `pkgcheck` is available, suggest running the `qa` intent next.
