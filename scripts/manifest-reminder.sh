@@ -1,55 +1,48 @@
 #!/usr/bin/env bash
-# PostToolUse / FileChanged hook: reminds Claude (via additionalContext) to
-# regenerate Manifest when an ebuild with SRC_URI is written or edited.
+# PostToolUse hook: reminds Claude (via additionalContext) to regenerate the
+# Manifest when an ebuild carrying SRC_URI is written, edited, copied or sed-ed.
 #
-# Reads canonical hook payload (JSON) from stdin. Falls back to $1 for manual
-# invocation. Emits hookSpecificOutput.additionalContext + exit 0 (canonical
-# for non-blocking informational hooks).
+# Targets are resolved from tool_input.file_path (Write|Edit) OR parsed out of
+# tool_input.command (Bash cp|mv|sed). The Bash path matters most: the
+# ebuild-bumper creates the new version with `cp old.ebuild new.ebuild`, which
+# never produces a file_path — so before this the reminder never fired on the
+# one flow that always needs a fresh Manifest.
+#
+# Emits hookSpecificOutput.additionalContext + exit 0 (canonical for
+# non-blocking informational hooks).
 set -euo pipefail
 
-EBUILD=""
+# shellcheck source=scripts/lib/hook-common.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/hook-common.sh"
 
 if [[ -t 0 ]]; then
-    EBUILD="${1:-}"
+    # Manual invocation: treat args as paths.
+    PAYLOAD=""
+    TARGETS=("$@")
 else
     PAYLOAD="$(cat)"
-    if command -v jq >/dev/null 2>&1; then
-        EBUILD=$(printf '%s' "$PAYLOAD" | jq -r '.tool_input.file_path // .tool_input.path // .file_path // .path // empty')
-    else
-        EBUILD=$(printf '%s' "$PAYLOAD" \
-            | grep -oE '"(file_path|path)"[[:space:]]*:[[:space:]]*"[^"]+"' \
-            | head -1 \
-            | sed -E 's/.*"(file_path|path)"[[:space:]]*:[[:space:]]*"([^"]+)".*/\2/')
-    fi
+    mapfile -t TARGETS < <(hook_ebuild_targets "$PAYLOAD")
 fi
 
-[[ -z "$EBUILD" ]] && exit 0
-[[ "$EBUILD" != *.ebuild ]] && exit 0
-[[ ! -f "$EBUILD" ]] && exit 0
+(( ${#TARGETS[@]} == 0 )) && exit 0
 
-grep -q '^[[:space:]]*SRC_URI' "$EBUILD" 2>/dev/null || exit 0
+EVENT=$(hook_event_name "$PAYLOAD" "PostToolUse")
 
-DIR=$(dirname -- "$EBUILD")
-PKG=$(basename -- "$DIR")
-MSG="[bentoo-dev] Reminder: regenerate Manifest for ${PKG} — run: ebuild ${EBUILD} manifest"
+PKGS=()
+CMDS=()
+for eb in "${TARGETS[@]}"; do
+    [[ -f "$eb" && "$eb" == *.ebuild ]] || continue
+    grep -q '^[[:space:]]*SRC_URI' "$eb" 2>/dev/null || continue
+    PKGS+=("$(basename -- "$(dirname -- "$eb")")")
+    CMDS+=("ebuild ${eb} manifest")
+done
 
-# Determine the hook event from stdin payload (PostToolUse vs FileChanged).
-EVENT="PostToolUse"
-if [[ -n "${PAYLOAD:-}" ]] && command -v jq >/dev/null 2>&1; then
-    EVENT=$(printf '%s' "$PAYLOAD" | jq -r '.hook_event_name // "PostToolUse"')
-fi
+(( ${#CMDS[@]} == 0 )) && exit 0
 
-if command -v jq >/dev/null 2>&1; then
-    jq -Rn --arg e "$EVENT" --arg c "$MSG" '{
-        hookSpecificOutput: {
-            hookEventName: $e,
-            additionalContext: $c
-        }
-    }'
-else
-    ESC=${MSG//\\/\\\\}
-    ESC=${ESC//\"/\\\"}
-    printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$EVENT" "$ESC"
-fi
+# Deduplicate package names for the human-readable half of the message.
+UNIQ_PKGS=$(printf '%s\n' "${PKGS[@]}" | awk '!seen[$0]++' | paste -sd, -)
+MSG="[bentoo-dev] Reminder: regenerate Manifest for ${UNIQ_PKGS} — run: $(printf '%s; ' "${CMDS[@]}")"
+MSG="${MSG%; }"
 
+hook_emit_context "$EVENT" "$MSG"
 exit 0
