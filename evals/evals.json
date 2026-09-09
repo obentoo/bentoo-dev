@@ -1,6 +1,7 @@
 [
   {
-    "skill": "ebuild-create",
+    "skill": "bentoo",
+    "intent": "create",
     "name": "create-cmake-ebuild",
     "prompt": "Create an ebuild for dev-util/foo-1.0 that uses CMake",
     "assertions": [
@@ -15,7 +16,8 @@
     ]
   },
   {
-    "skill": "ebuild-create",
+    "skill": "bentoo",
+    "intent": "create",
     "name": "create-binary-deb-ebuild",
     "prompt": "Create an ebuild for app-editors/bar-2.0 from upstream .deb",
     "assertions": [
@@ -27,7 +29,8 @@
     ]
   },
   {
-    "skill": "ebuild-create",
+    "skill": "bentoo",
+    "intent": "create",
     "name": "create-live-snapshot-dual",
     "prompt": "Create a live+snapshot ebuild for media-libs/quux from github.com/example/quux",
     "assertions": [
@@ -38,7 +41,8 @@
     ]
   },
   {
-    "skill": "ebuild-bump",
+    "skill": "bentoo",
+    "intent": "bump",
     "name": "standard-bump",
     "prompt": "Bump dev-util/glslang from 1.4.341.0 to 1.4.342.0",
     "assertions": [
@@ -49,7 +53,8 @@
     ]
   },
   {
-    "skill": "ebuild-bump",
+    "skill": "bentoo",
+    "intent": "bump",
     "name": "snapshot-bump",
     "prompt": "Snapshot bump media-libs/quux to _p20260425 with commit abc123def456",
     "assertions": [
@@ -60,7 +65,8 @@
     ]
   },
   {
-    "skill": "ebuild-edit",
+    "skill": "bentoo",
+    "intent": "edit",
     "name": "add-use-flag",
     "prompt": "Add wayland USE flag to app-editors/cursor",
     "assertions": [
@@ -70,7 +76,8 @@
     ]
   },
   {
-    "skill": "ebuild-edit",
+    "skill": "bentoo",
+    "intent": "edit",
     "name": "add-patch",
     "prompt": "Add files/glslang-fix-gcc15.patch to dev-util/glslang and reference it via PATCHES",
     "assertions": [
@@ -80,7 +87,8 @@
     ]
   },
   {
-    "skill": "overlay-clean",
+    "skill": "bentoo",
+    "intent": "clean",
     "name": "remove-old-versions",
     "prompt": "Remove old versions of app-editors/cursor, keep only latest",
     "assertions": [
@@ -90,7 +98,8 @@
     ]
   },
   {
-    "skill": "overlay-clean",
+    "skill": "bentoo",
+    "intent": "clean",
     "name": "create-missing-metadata",
     "prompt": "Scan the overlay for packages missing metadata.xml and create them",
     "assertions": [
@@ -100,7 +109,8 @@
     ]
   },
   {
-    "skill": "ebuild-qa",
+    "skill": "bentoo",
+    "intent": "qa",
     "name": "qa-check-package",
     "prompt": "Run QA check on dev-util/glslang",
     "assertions": [
@@ -111,7 +121,8 @@
     ]
   },
   {
-    "skill": "ebuild-qa",
+    "skill": "bentoo",
+    "intent": "qa",
     "name": "qa-pkgcheck-fallback",
     "prompt": "Run QA check on x11-misc/baz when pkgcheck is not installed",
     "assertions": [
@@ -191,6 +202,95 @@
       "Hook stdout contains hookSpecificOutput.additionalContext",
       "additionalContext includes 'network unreachable' and SRC_URI guidance",
       "No-op when failed command is not `ebuild ... manifest`"
+    ]
+  },
+  {
+    "skill": "bentoo",
+    "intent": "bootstrap",
+    "name": "bootstrap-new-overlay",
+    "prompt": "Bootstrap a new Gentoo overlay at /tmp/myoverlay named myoverlay",
+    "assertions": [
+      "File /tmp/myoverlay/metadata/layout.conf exists",
+      "layout.conf declares 'masters = gentoo'",
+      "layout.conf declares 'thin-manifests = true'",
+      "layout.conf manifest-hashes follows GLEP 84 (BLAKE2B SHA512)",
+      "File /tmp/myoverlay/profiles/repo_name exists and holds exactly 'myoverlay'",
+      "profiles/categories is NOT created when every category is inherited from a master",
+      "An existing metadata/layout.conf is never overwritten"
+    ]
+  },
+  {
+    "hook": "quick-lint",
+    "name": "lint-fires-on-bash-cp",
+    "scenario": "PostToolUse payload for `Bash(cp old.ebuild new.ebuild)`. A Bash payload carries tool_input.command, never tool_input.file_path — and this is the ebuild-bumper's Step 2, so a hook reading only file_path covers nothing.",
+    "assertions": [
+      "Targets are parsed out of tool_input.command, not tool_input.file_path",
+      "Both the source and the destination .ebuild are linted",
+      "Findings surface as hookSpecificOutput.additionalContext",
+      "Exit code 0 (PostToolUse cannot block)"
+    ]
+  },
+  {
+    "hook": "quick-lint",
+    "name": "eapply-user-scoped-to-src-prepare",
+    "scenario": "Ebuild overrides src_prepare() with only `eapply`, but the bare word `default` appears elsewhere (e.g. `econf --enable-default-widgets` in src_configure).",
+    "assertions": [
+      "Reports ERROR 'src_prepare() overridden without eapply_user or default'",
+      "A file-wide grep for 'default' must NOT satisfy the check",
+      "An ebuild that does call `default` inside src_prepare() reports no error"
+    ]
+  },
+  {
+    "hook": "quick-lint",
+    "name": "license-exempt-for-acct-and-virtual",
+    "scenario": "Ebuilds with no LICENSE= under acct-user/, acct-group/, virtual/ and a normal category.",
+    "assertions": [
+      "Missing LICENSE is an ERROR for a normal category (PMS)",
+      "Missing LICENSE is NOT reported for virtual/*, acct-user/*, acct-group/* — they install no files",
+      "Missing SLOT is an ERROR in every case (no implicit default in EAPI 8)"
+    ]
+  },
+  {
+    "hook": "quick-lint",
+    "name": "json-batch-mode",
+    "scenario": "`quick-lint.sh --json a.ebuild b.ebuild` invoked by the qa-checker agent.",
+    "assertions": [
+      "Emits {results:[{file,errors,warnings}], summary:{files,errors,warnings,status}}",
+      "summary.status is FAIL when any error was found, PASS otherwise",
+      "Exit code is 0 regardless of findings — the report is the payload"
+    ]
+  },
+  {
+    "hook": "ebuild-creator-validate",
+    "name": "inconclusive-is-not-a-pass",
+    "scenario": "SubagentStop fires but no package under the searched roots was modified in the last 5 minutes.",
+    "assertions": [
+      "Output must NOT claim 'validation passed'",
+      "additionalContext states the run was INCONCLUSIVE and that 0 packages were examined",
+      "The subagent's cwd (its worktree under `isolation: worktree`) is searched in addition to the cached overlay root",
+      "Exit code 0"
+    ]
+  },
+  {
+    "hook": "manifest-stale-check",
+    "name": "scoped-and-batched",
+    "scenario": "Stop hook runs at the end of a turn inside a large overlay (hundreds of ebuilds).",
+    "assertions": [
+      "The walk is scoped to the overlay root resolved from the session cache",
+      "Result is identical to an unscoped walk (same stale packages reported)",
+      "thin-manifests overlays report only genuinely missing Manifests",
+      "stop_hook_active short-circuits the run"
+    ]
+  },
+  {
+    "hook": "overlay-context",
+    "name": "bounded-summary-by-default",
+    "scenario": "The `bentoo` skill loads its overlay context block inside a real overlay whose profiles/package.mask is ~15 KB.",
+    "assertions": [
+      "Default output is the bounded summary (~1.3 KB), served from the session cache",
+      "profiles/package.mask is NOT included by default",
+      "--full includes layout.conf and package.mask verbatim",
+      "Falls back to a live detect-overlay.sh run when the cache does not cover the cwd"
     ]
   }
 ]

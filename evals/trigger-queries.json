@@ -1,5 +1,5 @@
 {
-  "ebuild-create": {
+  "create": {
     "should_trigger": [
       "create an ebuild for dev-util/foo from this CMake repo on github",
       "package this AppImage at https://example.com/bar.AppImage as app-editors/bar-2.5",
@@ -15,7 +15,7 @@
       "compile this C++ file"
     ]
   },
-  "ebuild-edit": {
+  "edit": {
     "should_trigger": [
       "add a wayland USE flag to app-editors/cursor and wire the conditional dependency",
       "editar dev-util/glslang para incluir o patch fix-build-gcc15.patch em PATCHES",
@@ -29,7 +29,7 @@
       "explain how dependency resolution works"
     ]
   },
-  "ebuild-bump": {
+  "bump": {
     "should_trigger": [
       "bump dev-util/glslang from 1.4.341.0 to 1.4.342.0 (standard semver)",
       "atualizar app-editors/cursor para 0.45.2 e remover a versão antiga",
@@ -42,7 +42,7 @@
       "compile mesa from source"
     ]
   },
-  "overlay-clean": {
+  "clean": {
     "should_trigger": [
       "limpar o overlay bentoo: remover versões antigas e regenerar todos os Manifests",
       "scan the overlay for packages missing metadata.xml and create them",
@@ -55,7 +55,7 @@
       "what is a Manifest?"
     ]
   },
-  "ebuild-qa": {
+  "qa": {
     "should_trigger": [
       "run QA check on dev-util/glslang",
       "verificar QA do pacote media-libs/foo",
@@ -67,6 +67,20 @@
     "should_not_trigger": [
       "explain pkgcheck",
       "fix the bugs in my ebuild (this should route to ebuild-edit, not qa)"
+    ]
+  },
+  "bootstrap": {
+    "should_trigger": [
+      "bootstrap a new Gentoo overlay at ~/myoverlay",
+      "create a new overlay repository from scratch",
+      "init an ebuild repository with masters = gentoo",
+      "criar overlay novo em ~/meuoverlay",
+      "quero iniciar um repositório de ebuilds do zero"
+    ],
+    "should_not_trigger": [
+      "create an ebuild for dev-libs/foo",
+      "what is an overlay?",
+      "git init"
     ]
   },
   "global_should_not_trigger": [

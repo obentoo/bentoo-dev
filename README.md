@@ -33,7 +33,7 @@ A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlay
 
 - **Single natural-language entry point** — `/bentoo-dev:bentoo "<instruction>"`.
   The skill receives a free-form request, classifies the intent
-  (`create` / `bump` / `edit` / `qa` / `clean`), asks the user when ambiguous,
+  (`create` / `bump` / `edit` / `qa` / `clean` / `bootstrap`), asks the user when ambiguous,
   loads the matching reference (`skills/bentoo/references/<intent>.md`),
   and delegates to the specialised sub-agent for that operation. Examples:
   - `/bentoo-dev:bentoo "create dev-libs/foo 1.2.3 from <upstream>"` → `ebuild-creator`
@@ -41,19 +41,22 @@ A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlay
   - `/bentoo-dev:bentoo "add USE flag wayland to games-util/baz"` → `ebuild-editor`
   - `/bentoo-dev:bentoo "run QA on dev-libs/foo"` → `qa-checker`
   - `/bentoo-dev:bentoo "clean the whole overlay"` → `overlay-maintainer`
+  - `/bentoo-dev:bentoo "bootstrap a new overlay at ~/myoverlay"` → `overlay-maintainer`
 
   Auto-trigger by description-matching still works — *"bump mesa to 26.0.5"*
   or *"package XYZ from .deb"* invokes the skill automatically without typing `/bentoo-dev:bentoo`.
 - **5 specialised sub-agents** at `agents/` — invoked via the `Agent` tool by the `bentoo` skill; each declares `effort`, `maxTurns`, `tools`, `disallowedTools`, `color`, and preloads the gotchas reference via `skills:` frontmatter.
-- **Deterministic hooks** covering 5 lifecycle events:
-  - `SessionStart` / `CwdChanged` (overlay auto-detect + cache).
+- **Deterministic hooks** covering 11 lifecycle events — see the full table under [Hooks](#hooks). The load-bearing ones:
+  - `SessionStart` / `CwdChanged` (overlay auto-detect, cached as a bounded summary).
   - `PreToolUse` Bash (rm safety, with `deny`/`ask` decisions).
   - `PostToolUse` Write|Edit (lint, Manifest reminder).
   - `PostToolUse` Bash `if: cp|mv|sed` (catches `.ebuild` edits via Bash that bypass Write|Edit; `FileChanged` is intentionally not used — it matches literal filenames, not globs).
   - `Stop` (Manifest staleness gate, `thin-manifests`-aware).
+  - `PreCompact` (re-injects the overlay identity so it survives compaction) and
+    `StopFailure` (logs API-error terminations to `${CLAUDE_PLUGIN_DATA}/stop-failures.log`).
 - **Background monitors** (v2.1.105) for portage ELOG and `pkgcheck` findings, scoped to the relevant skill invocations.
 - **Output style** `qa-report` for deterministic, parseable QA reports.
-- **Bilingual triggers (PT/EN)** consolidated in the `bentoo` skill `description` and `when_to_use` for high auto-trigger fidelity across all five operations.
+- **Bilingual triggers (PT/EN)** consolidated in the `bentoo` skill `description` and `when_to_use` for high auto-trigger fidelity across all six operations. The Portuguese phrases are match strings, not prose — they are labelled `PT triggers:` in the frontmatter so they are not "translated away" by a later cleanup.
 - **15 ebuild templates** in `assets/templates/` (incl. `source-pypi`, `virtual`, `acct-user`, `acct-group`) + `metadata.xml` + a GLEP 42 `news-item.txt`; canonical placeholder substitution via `render-template.sh --env` with parametrized `@@EAPI@@` (renders 8 by default; `EAPI=9` opt-in) and `@@KEYWORDS@@`.
 - **Per-overlay profiles** in `assets/profiles/` — currently `bentoo` and `default`.
 - **Modular references** in `references/` — `gotchas.md` preloaded as a skill; the others lazy-loaded on demand.
@@ -123,7 +126,9 @@ bentoo-dev/
 ├── monitors/monitors.json          # portage-elog + pkgcheck-watch (v2.1.105+)
 ├── output-styles/qa-report.md      # deterministic QA report format
 ├── scripts/                        # shell helpers used by hooks / agents / monitors
-│   ├── detect-overlay.sh
+│   ├── detect-overlay.sh           # --summary (default) | --full
+│   ├── overlay-context.sh          # cache-first context for the skill
+│   ├── lib/hook-common.sh          # shared payload/target helpers
 │   ├── cache-overlay.sh            # SessionStart / CwdChanged hook target
 │   ├── quick-lint.sh
 │   ├── manifest-reminder.sh
@@ -154,22 +159,56 @@ bentoo-dev/
 
 | Event              | Matcher / Filter                              | Script                                | Purpose                                                                                       |
 |--------------------|-----------------------------------------------|---------------------------------------|-----------------------------------------------------------------------------------------------|
-| SessionStart       | _(none)_                                      | `cache-overlay.sh`                    | Detect active overlay once and cache as `${CLAUDE_PLUGIN_DATA}/overlay.json`.                 |
+| SessionStart       | _(none)_                                      | `cache-overlay.sh`                    | Detect active overlay once and cache summary + fields as `${CLAUDE_PLUGIN_DATA}/overlay.json`.                 |
 | SessionEnd         | _(none)_                                      | `cleanup-cache.sh`                    | Drop the per-session overlay cache so the next session re-detects from scratch.               |
 | CwdChanged         | _(none)_                                      | `cache-overlay.sh`                    | Refresh cache when the user navigates between overlays.                                       |
 | UserPromptSubmit   | _(none)_                                      | `session-title.sh`                    | Auto-rename the session via `hookSpecificOutput.sessionTitle` for `/bentoo-dev:*` invocations. |
 | PreToolUse         | `Bash` + `if: Bash(rm *)`                     | `safety-rm-check.sh`                  | `deny` rm of the only `.ebuild` in a dir; `ask` rm with orphan DIST risk.                     |
 | PreToolUse         | `Bash` + `if: Bash(git rm *)`                 | `safety-rm-check.sh`                  | Same gate for `git rm` (split entry — pipe-OR is not documented for `if:`).                   |
-| PostToolUse        | `Write\|Edit`                                 | `quick-lint.sh` + `manifest-reminder.sh` | Lint EAPI, copyright, `eapply_user`, KEYWORDS, SLOT, LICENSE; remind on SRC_URI changes.   |
+| PostToolUse        | `Write\|Edit`                                 | `quick-lint.sh` + `manifest-reminder.sh` | Lint EAPI, copyright header + year, `eapply_user` (scoped to `src_prepare`), KEYWORDS, SLOT, LICENSE; remind on SRC_URI changes. |
 | PostToolUseFailure | `Bash`                                        | `manifest-failure-diagnose.sh`        | Classify `ebuild ... manifest` failures (network/checksum/404/perm) and suggest next steps.   |
 | PostToolUse        | `Bash` + `if: cp\|mv\|sed`                     | `quick-lint.sh` + `manifest-reminder.sh` | Catch `.ebuild` edits made via Bash (`cp`/`mv`/`sed`) that bypass `Write\|Edit`.            |
 | SubagentStop       | `ebuild-creator`                              | `ebuild-creator-validate.sh`          | Block stop if any newly-created package is missing `metadata.xml` or `Manifest`.              |
 | Stop               | _(any)_                                       | `manifest-stale-check.sh`             | Block turn end if a modified ebuild has a stale Manifest (skips `thin-manifests` overlays).   |
+| StopFailure        | _(any)_                                       | `stopfailure-log.sh`                  | Log API-error terminations (rate limit, billing, max tokens) to `stop-failures.log`.           |
+| PreCompact         | _(any)_                                       | `precompact-reinject-overlay.sh`      | Re-inject the cached overlay identity so it survives conversation compaction.                  |
 
 All scripts read the canonical hook JSON payload from stdin, emit
 `hookSpecificOutput` JSON shapes (`permissionDecision` / `additionalContext` /
 `sessionTitle` / `{decision: "block", reason}`) on stdout, and exit 0.
 The `Stop` and `SubagentStop` hooks honour the `stop_hook_active` loop guard.
+
+### Context budget: the overlay summary is bounded on purpose
+
+`scripts/overlay-context.sh` is what the `bentoo` skill injects at load time. It
+serves the **bounded summary** (~1.3 KB) out of the session cache written by
+`cache-overlay.sh`, and only re-runs detection when the cache does not cover the
+current directory.
+
+The verbatim `metadata/layout.conf` + `profiles/package.mask` dump is **not** in
+that summary. On a real overlay `package.mask` alone is ~15 KB — about 4k tokens
+injected on every single invocation, for something only the `clean` / `mask`
+intents ever read. Load it explicitly when you need it:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/overlay-context.sh" --full   # layout.conf + package.mask
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-overlay.sh" --summary  # same summary, no cache
+```
+
+### Batch linting without the model
+
+`scripts/quick-lint.sh` doubles as a CLI. The `qa-checker` agent calls it once
+per run so the seven mechanical checks cost nothing:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/quick-lint.sh" --json <ebuild> [<ebuild> ...]
+# -> {"results":[{"file","errors","warnings"}],"summary":{"files","errors","warnings","status"}}
+```
+
+Severity follows PMS: missing `SLOT` or `LICENSE` is an **error** (SLOT has no
+implicit default in EAPI 8); a stale copyright year is a **warning**. `LICENSE`
+is deliberately not required for `virtual/*`, `acct-user/*` and `acct-group/*`,
+which install no files. Always exits 0 — the findings are the output.
 
 ### `permissionDecision`: `ask` vs `defer`
 
@@ -225,6 +264,21 @@ frontmatter, with `user-invocable: false`):
 8. `thin-manifests` only contains DIST entries
 9. `default` in `src_prepare` applies `PATCHES` + `eapply_user`
 10. `MY_P` / `MY_PN` for upstream naming mismatches
+
+### Overlay bookkeeping the agents enforce
+
+Two rules that are not ebuild syntax but silently rot an overlay, wired into
+`ebuild-bumper` and `overlay-maintainer`:
+
+- **`pkgdev manifest` always takes an explicit target.** With no target it
+  rewrites the Manifest of the entire overlay.
+- **`metadata/md5-cache` is regenerated per package after a bump**, when the
+  overlay keeps one — otherwise the previous version's entry is orphaned and the
+  litter grows with every bump:
+  `egencache --repositories-configuration "$(portageq repos_config /)" --update --repo <repo> <cat>/<pkg>`.
+  `--repositories-configuration` is mandatory on a checkout that is not the path
+  Portage has registered; `PORTAGE_CONFIGROOT` / `PORTAGE_REPOSITORIES` are
+  ignored by `egencache`.
 
 ---
 
