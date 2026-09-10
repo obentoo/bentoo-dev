@@ -16,10 +16,30 @@ jobs:
         with:
           node-version: '20'
 
+      # Install ShellCheck only when it is missing.
+      #
+      # The GitHub-hosted Ubuntu image already ships it, so on CI this step
+      # runs no apt at all. That matters: the previous unconditional
+      # `sudo apt-get update` refreshed every configured repository, including
+      # third-party ones this job never uses, and a Hash Sum mismatch on
+      # dl.google.com failed the whole run -- while apt itself reported
+      # "shellcheck is already the newest version".
+      #
+      # The install path is kept for `act`, whose default image
+      # (catthehacker/ubuntu:act-latest) does NOT ship ShellCheck. Dropping it
+      # would make the job pass on GitHub and fail locally, which defeats
+      # mirroring the job before pushing. The fallback tolerates a partial
+      # `update` so one flaky third-party index cannot break it either.
+      #
+      # `--version` records which binary actually ran: when the image supplies
+      # it, the version can move without a commit here.
       - name: ShellCheck plugin scripts
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y shellcheck
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            sudo apt-get update -qq -o Acquire::Retries=3 || true
+            sudo apt-get install -y --no-install-recommends shellcheck
+          fi
+          shellcheck --version
           shellcheck scripts/*.sh scripts/lib/*.sh bin/*
 
       - name: Install Claude Code
