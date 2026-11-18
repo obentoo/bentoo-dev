@@ -1,8 +1,10 @@
 # bentoo-dev
 
+**English** · [Português (Brasil)](README.pt-BR.md) · [Español](README.es.md) · [Русский](README.ru.md) · [简体中文](README.zh-CN.md)
+
 A Claude Code plugin for developing and maintaining **Gentoo ebuilds and overlays**. Provides specialised skills, sub-agents, hooks, monitors, and reference material for the full lifecycle of an ebuild — create, edit, bump, clean, QA-validate.
 
-> **Status:** v0.3.0 — bounded skill context, hook-correctness fixes, and component-reference conformance (see `CHANGELOG.md`).
+> **Status:** v0.4.0 — README and permission prompts translated into Spanish, Brazilian Portuguese, Russian and Simplified Chinese (see `CHANGELOG.md`).
 > **Spec target:** Claude Code v2.1.259+ (works on later releases).
 
 > **Overlay-agnostic.** Although maintained by the Bentoo project, this plugin
@@ -74,6 +76,7 @@ the behaviour is correct either way; only the wasted spawns differ.
     `StopFailure` (logs API-error terminations to `${CLAUDE_PLUGIN_DATA}/stop-failures.log`).
 - **Background monitors** (v2.1.105) for portage ELOG and `pkgcheck` findings, scoped to the relevant skill invocations.
 - **Output style** `qa-report` for deterministic, parseable QA reports.
+- **Localized permission prompts** — the `ask` prompt of the rm-safety hook follows your locale (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`, as in gettext) in Spanish, Brazilian Portuguese, Russian and Simplified Chinese, falling back to English. Everything Claude reads — skills, agents, references, hook context, `deny` and `block` reasons — stays English on purpose: a translated prompt makes the model worse and helps no user. See `scripts/lib/i18n.sh`.
 - **Bilingual triggers (PT/EN)** consolidated in the `bentoo` skill `description` and `when_to_use` for high auto-trigger fidelity across all six operations. The Portuguese phrases are match strings, not prose — they are labelled `PT triggers:` in the frontmatter so they are not "translated away" by a later cleanup.
 - **15 ebuild templates** in `assets/templates/` (incl. `source-pypi`, `virtual`, `acct-user`, `acct-group`) + `metadata.xml` + a GLEP 42 `news-item.txt`; canonical placeholder substitution via `render-template.sh --env` with parametrized `@@EAPI@@` (renders 8 by default; `EAPI=9` opt-in) and `@@KEYWORDS@@`.
 - **Per-overlay profiles** in `assets/profiles/` — currently `bentoo` and `default`.
@@ -147,6 +150,7 @@ bentoo-dev/
 │   ├── detect-overlay.sh           # --summary (default) | --full
 │   ├── overlay-context.sh          # cache-first context for the skill
 │   ├── lib/hook-common.sh          # shared payload/target helpers
+│   ├── lib/i18n.sh                 # message catalogs for user-facing hook text
 │   ├── cache-overlay.sh            # SessionStart / CwdChanged hook target
 │   ├── quick-lint.sh
 │   ├── manifest-reminder.sh
@@ -156,6 +160,7 @@ bentoo-dev/
 │   ├── monitor-pkgcheck.sh
 │   ├── render-template.sh          # substitutes @@VAR@@ in templates
 │   └── plugin-data-dir.sh
+├── tests/i18n.bats                 # catalogs, locale selection, localized rm prompt
 ├── bin/                            # PATH-exposed wrappers
 │   ├── gentoo-overlay-detect
 │   ├── gentoo-overlay-cache
@@ -374,6 +379,7 @@ marketplaces.
 2. Add new templates under `assets/templates/`.
 3. Update `evals/evals.json` and `evals/trigger-queries.json` whenever you add a new skill or change triggers.
 4. Bump `version` in `.claude-plugin/plugin.json` and update `CHANGELOG.md`.
+5. A new message a **human** reads (a permission prompt, not hook context) gets an ID in **every** catalog in `scripts/lib/i18n.sh`; `bats tests/i18n.bats` fails otherwise. When you change `README.md`, update the translations (`README.<lang>.md`) or say in the PR that they lag.
 
 ---
 
