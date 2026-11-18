@@ -20,7 +20,14 @@
 # guard rail, not a security boundary. For a hard block, pair it with a
 # `permissions.deny` rule (see README "Hardening rm"). Unparseable-but-dangerous
 # forms (recursive rm, globbed *.ebuild) fall through to an `ask` prompt below.
+#
+# Language: `ask` reasons are rendered in the user's permission prompt, so they
+# come from the scripts/lib/i18n.sh catalogs. `deny` reasons are read by Claude,
+# which must act on them, so they stay English.
 set -euo pipefail
+
+# shellcheck source=scripts/lib/i18n.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/i18n.sh"
 
 [[ -t 0 ]] && exit 0
 
@@ -53,7 +60,7 @@ ASK_REASONS=()
 if echo "$CMD" | grep -qE '(^|[[:space:]])rm([[:space:]]|$)' \
    && echo "$CMD" | grep -qE '(-[a-zA-Z]*[rR]|--recursive|\*)' \
    && echo "$CMD" | grep -qE '\.ebuild|/'; then
-    ASK_REASONS+=("recursive or globbed rm near .ebuild files — confirm it will not empty a package directory")
+    ASK_REASONS+=("$(i18n_msg rm.ask.recursive)")
 fi
 
 # Extract paths ending in .ebuild from the command (best-effort tokenization)
@@ -83,7 +90,7 @@ for token in $CMD; do
     # Match the version as a fixed string (it contains regex metacharacters like
     # '.') against DIST lines only, to avoid false positives.
     if [[ -f "$manifest" ]] && grep '^DIST ' "$manifest" 2>/dev/null | grep -qF -- "$ver"; then
-        ASK_REASONS+=("$target removal would orphan DIST entries in $manifest — confirm rm + manifest regenerate")
+        ASK_REASONS+=("$(i18n_msg rm.ask.orphan_dist target="$target" manifest="$manifest")")
     fi
 done
 

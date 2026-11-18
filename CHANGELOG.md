@@ -7,9 +7,45 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-11-18
+
+Translation release. The README and the one hook message a person reads are
+now available in Spanish, Brazilian Portuguese, Russian and Simplified
+Chinese. Everything the model reads stays English, deliberately.
+
 ### Added
 
+- `README.pt-BR.md`, `README.es.md`, `README.ru.md`, `README.zh-CN.md`, with a
+  language switcher at the top of every README. `README.md` stays the
+  reference; each translation says so. Code blocks, commands, paths and
+  identifiers are verbatim.
+- `scripts/lib/i18n.sh`: plain-bash message catalogs keyed by ID, with named
+  `{placeholders}` so a translation can reorder them. The language is chosen
+  the way gettext does it: `LC_ALL` > `LC_MESSAGES` > `LANG` give the locale, a
+  `C`/`POSIX` locale means English, otherwise the `LANGUAGE` list is tried
+  first; anything without a catalog falls back to English. No gettext: the
+  plugin comes from a marketplace, not a package manager, so there is no
+  `/usr/share/locale` and no guarantee the binaries exist.
+- `tests/i18n.bats`: every catalog has every ID and keeps every placeholder,
+  locale selection and precedence, English fallback, and the localized
+  `safety-rm-check.sh` output.
 - `SECURITY.md`: scope, private vulnerability reporting, supported versions.
+
+### Changed
+
+- **`safety-rm-check.sh` `ask` reasons follow the user's locale.** Claude Code
+  shows an `ask` reason in the user's permission prompt, so it is the text a
+  person reads. `deny` reasons stay English: Claude Code hands those to the
+  model, which has to act on them.
+
+### Not translated, on purpose
+
+Skills, agents, references, the output style, and every hook output the model
+consumes — `additionalContext`, Stop/SubagentStop `block` reasons, monitor
+lines, `bin/` tool output (on the Bash tool's `PATH`, so Claude reads it).
+Translating a prompt makes the model worse at following it and helps no user.
+The `statusMessage` spinner labels in `hooks/hooks.json` are human-facing but
+static JSON; Claude Code offers no per-locale variant, so they stay English.
 
 ## [0.3.0] — 2026-09-09
 
