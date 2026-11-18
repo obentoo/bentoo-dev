@@ -76,7 +76,7 @@
 - **后台监视器**（v2.1.105），监视 portage ELOG 和 `pkgcheck` 的检查结果，仅在相关技能调用期间运行。
 - **输出样式** `qa-report`，用于生成确定、可解析的 QA 报告。
 - **本地化的权限提示** — rm 安全钩子的 `ask` 提示跟随你的语言环境（`LANGUAGE`、`LC_ALL`、`LC_MESSAGES`、`LANG`，与 gettext 相同），支持西班牙语、巴西葡萄牙语、俄语和简体中文，否则回退到英语。Claude 读取的一切内容 — 技能、代理、参考资料、钩子上下文、`deny` 和 `block` 原因 — 都有意保持英文：翻译后的提示会让模型表现变差，也帮不了任何用户。见 `scripts/lib/i18n.sh`。
-- **双语触发词（PT/EN）**，集中在 `bentoo` 技能的 `description` 和 `when_to_use` 中，使全部六种操作都能高保真地自动触发。葡萄牙语短语是匹配字符串而非正文 — 它们在 frontmatter 中标记为 `PT triggers:`，以免被日后的清理“翻译掉”。
+- **英文触发词**，集中在 `bentoo` 技能的 `description` 和 `when_to_use` 中，使全部六种操作都能高保真地自动触发。自 0.3.0 起，用其他语言书写的指令不再自动触发该技能；请用 `/bentoo-dev:bentoo "…"` 显式调用。
 - **15 个 ebuild 模板**，位于 `assets/templates/`（包括 `source-pypi`、`virtual`、`acct-user`、`acct-group`），外加 `metadata.xml` 和一个 GLEP 42 `news-item.txt`；通过 `render-template.sh --env` 进行规范的占位符替换，支持参数化的 `@@EAPI@@`（默认渲染为 8；可选 `EAPI=9`）和 `@@KEYWORDS@@`。
 - **按 overlay 区分的配置档**，位于 `assets/profiles/` — 目前有 `bentoo` 和 `default`。
 - **模块化参考资料**，位于 `references/` — `gotchas.md` 作为技能预加载；其余按需延迟加载。
