@@ -148,7 +148,7 @@
     "scenario": "Package has two *.ebuild files; Manifest still references a DIST tied to the version being removed.",
     "assertions": [
       "Hook stdout contains hookSpecificOutput.permissionDecision = \"ask\" (NOT \"defer\")",
-      "permissionDecisionReason mentions 'orphan DIST entries'",
+      "permissionDecisionReason mentions 'orphan DIST entries' (English locale; other locales read the scripts/lib/i18n.sh catalog)",
       "Exit code 0",
       "Removal can proceed only after user confirmation"
     ]
